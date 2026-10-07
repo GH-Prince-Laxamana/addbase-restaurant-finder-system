@@ -6,8 +6,28 @@ import {
   errorHandler,
 } from "./middleware/error.middleware.js";
 import { connectDatabase } from "./config/database.js";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import { apiRateLimiter } from "./middleware/rateLimit.middleware.js";
 
 const app = express();
+
+app.disable("x-powered-by");
+
+app.use(helmet());
+
+app.use(
+  cors({
+    origin: env.clientOrigin,
+    credentials: true,
+  }),
+);
+
+app.use(express.json({ limit: "1mb" }));
+app.use(cookieParser());
+
+app.use(apiRateLimiter);
 
 app.use(express.json());
 
