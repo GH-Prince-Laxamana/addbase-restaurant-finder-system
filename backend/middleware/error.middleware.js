@@ -17,6 +17,7 @@ export function errorHandler(err, req, res, next) {
       code: err.code || "INTERNAL_SERVER_ERROR",
       message:
         statusCode === 500 ? "An unexpected error occurred." : err.message,
+      ...(err.details && { details: err.details }),
     },
   });
 }

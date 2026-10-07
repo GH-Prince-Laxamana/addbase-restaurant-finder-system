@@ -2,6 +2,7 @@
 node_modules/
 
 # Environment variables & secrets
+cookies.txt
 .env
 .env*.local
 .env.example
