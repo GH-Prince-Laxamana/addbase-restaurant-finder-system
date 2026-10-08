@@ -42,7 +42,7 @@ export async function adminLogin(req, res) {
 
   res.cookie(env.refreshCookieName, refreshToken, {
     ...refreshCookieOptions,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: env.refreshTokenMaxAgeMs,
   });
 
   res.json({
@@ -68,7 +68,7 @@ export async function login(req, res) {
 
   res.cookie(env.refreshCookieName, refreshToken, {
     ...refreshCookieOptions,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: env.refreshTokenMaxAgeMs,
   });
 
   res.json({
@@ -106,7 +106,7 @@ export async function refresh(req, res) {
 
   res.cookie(env.refreshCookieName, tokens.refreshToken, {
     ...refreshCookieOptions,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: env.refreshTokenMaxAgeMs,
   });
 
   res.json({

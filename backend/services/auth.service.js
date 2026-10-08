@@ -11,10 +11,7 @@ import {
 } from "../utils/auth.js";
 
 function getRefreshTokenExpirationDate() {
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7);
-
-  return expiresAt;
+  return new Date(Date.now() + env.refreshTokenMaxAgeMs);
 }
 
 export async function registerUser({ name, email, password }) {
