@@ -56,3 +56,105 @@ export function validateLogin(req, res, next) {
 
   next();
 }
+
+function validateRestaurantFields(body, { partial = false } = {}) {
+  const details = {};
+
+  const requiredStringFields = [
+    ["restaurantId", "Restaurant ID"],
+    ["name", "Name"],
+    ["cuisine", "Cuisine"],
+    ["borough", "Borough"],
+  ];
+
+  for (const [field, label] of requiredStringFields) {
+    if (partial && body[field] === undefined) {
+      continue;
+    }
+
+    if (typeof body[field] !== "string" || !body[field].trim()) {
+      details[field] = `${label} is required.`;
+    }
+  }
+
+  if (body.address === undefined && !partial) {
+    details.address = "Address is required.";
+  }
+
+  if (body.address !== undefined) {
+    if (
+      typeof body.address !== "object" ||
+      Array.isArray(body.address) ||
+      body.address === null
+    ) {
+      details.address = "Address must be an object.";
+    } else {
+      if (
+        body.address.street !== undefined &&
+        (typeof body.address.street !== "string" || !body.address.street.trim())
+      ) {
+        details["address.street"] = "Street must be a non-empty string.";
+      }
+
+      if (
+        body.address.zipcode !== undefined &&
+        (typeof body.address.zipcode !== "string" ||
+          !body.address.zipcode.trim())
+      ) {
+        details["address.zipcode"] = "Zipcode must be a non-empty string.";
+      }
+
+      if (
+        body.address.building !== undefined &&
+        typeof body.address.building !== "string"
+      ) {
+        details["address.building"] = "Building must be a string.";
+      }
+
+      if (body.address.coord !== undefined) {
+        const coord = body.address.coord;
+
+        if (
+          !Array.isArray(coord) ||
+          coord.length !== 2 ||
+          !coord.every((value) => typeof value === "number")
+        ) {
+          details["address.coord"] =
+            "Coordinates must contain exactly two numbers.";
+        } else if (
+          coord[0] < -180 ||
+          coord[0] > 180 ||
+          coord[1] < -90 ||
+          coord[1] > 90
+        ) {
+          details["address.coord"] =
+            "Coordinates must be valid longitude and latitude values.";
+        }
+      }
+    }
+  }
+
+  return details;
+}
+
+export function validateAdminRestaurantCreate(req, res, next) {
+  const details = validateRestaurantFields(req.body);
+
+  if (Object.keys(details).length > 0) {
+    return next(validationError(details));
+  }
+
+  next();
+}
+
+export function validateAdminRestaurantUpdate(req, res, next) {
+  const details = validateRestaurantFields(req.body, {
+    partial: true,
+  });
+
+  if (Object.keys(details).length > 0) {
+    return next(validationError(details));
+  }
+
+  next();
+}
