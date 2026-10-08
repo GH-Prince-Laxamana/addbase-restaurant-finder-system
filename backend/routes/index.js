@@ -5,6 +5,7 @@ import reviewRouter from "./review.routes.js";
 import favoriteRouter from "./favorite.routes.js";
 import adminRestaurantRouter from "./adminRestaurant.routes.js";
 import adminReviewRouter from "./adminReview.routes.js";
+import adminStatsRouter from "./adminStats.routes.js";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use("/reviews", reviewRouter);
 router.use("/favorites", favoriteRouter);
 router.use("/admin/restaurants", adminRestaurantRouter);
 router.use("/admin/reviews", adminReviewRouter);
+router.use("/admin/stats", adminStatsRouter);
 
 export default router;
