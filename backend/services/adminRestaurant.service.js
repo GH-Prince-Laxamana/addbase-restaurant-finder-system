@@ -13,9 +13,6 @@ const allowedUpdateFields = [
   "cuisine",
   "borough",
   "address",
-  "avgScore",
-  "scoreCount",
-  "isActive",
 ];
 
 function notFoundError() {
@@ -78,6 +75,15 @@ export async function editRestaurant(id, data) {
   }
 
   const normalized = normalizeRestaurantInput(updates);
+
+  if (Object.keys(normalized).length === 0) {
+    const error = new Error("No editable restaurant fields were provided.");
+
+    error.statusCode = 400;
+    error.code = "NO_UPDATABLE_FIELDS";
+
+    throw error;
+  }
 
   return updateRestaurantById(id, normalized);
 }
