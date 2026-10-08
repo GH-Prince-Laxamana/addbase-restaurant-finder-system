@@ -1,4 +1,5 @@
 import {
+  authenticateAdminUser,
   authenticateUser,
   createAuthTokens,
   getCurrentUser,
@@ -26,6 +27,32 @@ export async function register(req, res) {
 
   res.status(201).json({
     user,
+  });
+}
+
+export async function adminLogin(req, res) {
+  const { email, password } = req.body;
+
+  const user = await authenticateAdminUser({
+    email,
+    password,
+  });
+
+  const { accessToken, refreshToken } = await createAuthTokens(user);
+
+  res.cookie(env.refreshCookieName, refreshToken, {
+    ...refreshCookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.json({
+    accessToken,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
   });
 }
 

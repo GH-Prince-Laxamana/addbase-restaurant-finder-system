@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   register,
+  adminLogin,
   login,
   refresh,
   logout,
@@ -15,6 +16,7 @@ import { authenticate } from "../middleware/auth.middleware.js";
 const router = Router();
 
 router.post("/register", validateRegister, register);
+router.post("/admin/login", validateLogin, adminLogin);
 router.post("/login", validateLogin, login);
 router.post("/refresh", refresh);
 router.post("/logout", logout);

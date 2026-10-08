@@ -48,6 +48,19 @@ export async function registerUser({ name, email, password }) {
   };
 }
 
+export async function authenticateAdminUser({ email, password }) {
+  const user = await authenticateUser({ email, password });
+
+  if (user.role !== "admin") {
+    const error = new Error("Invalid email or password.");
+    error.statusCode = 401;
+    error.code = "INVALID_CREDENTIALS";
+    throw error;
+  }
+
+  return user;
+}
+
 export async function authenticateUser({ email, password }) {
   const normalizedEmail = email.trim().toLowerCase();
 

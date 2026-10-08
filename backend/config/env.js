@@ -12,6 +12,9 @@ const env = {
   accessTokenExpiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m",
   refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d",
   refreshCookieName: "restaurant_refresh_token",
+  adminName: process.env.ADMIN_NAME,
+  adminEmail: process.env.ADMIN_EMAIL,
+  adminPassword: process.env.ADMIN_PASSWORD,
 };
 
 export default env;
