@@ -89,13 +89,17 @@ async function run() {
             avgScore: 0,
             scoreCount: 0,
             isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
         },
         upsert: true,
       },
     }));
 
-    const result = await Restaurant.bulkWrite(operations);
+    const result = await Restaurant.bulkWrite(operations, {
+      timestamps: false,
+    });
 
     await Restaurant.createIndexes();
 
