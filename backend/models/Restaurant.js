@@ -20,8 +20,9 @@ const addressSchema = new Schema(
     },
     coord: {
       type: [Number],
+      default: undefined,
       validate: {
-        validator: (value) => value.length === 2,
+        validator: (value) => value == null || value.length === 2,
         message: "Coordinates must contain longitude and latitude.",
       },
     },

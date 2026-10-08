@@ -1,0 +1,79 @@
+import mongoose from "mongoose";
+import Restaurant from "../models/Restaurant.js";
+import Review from "../models/Review.js";
+import Favorite from "../models/Favorite.js";
+
+export async function createRestaurant(data) {
+  return Restaurant.create(data);
+}
+
+export async function findRestaurantById(id) {
+  if (!mongoose.isValidObjectId(id)) {
+    return null;
+  }
+
+  return Restaurant.findById(id);
+}
+
+export async function updateRestaurantById(id, updates) {
+  return Restaurant.findByIdAndUpdate(
+    id,
+    { $set: updates },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+}
+
+export async function softDeleteRestaurant(id) {
+  return Restaurant.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        isActive: false,
+      },
+    },
+    {
+      new: true,
+    },
+  );
+}
+
+export async function restoreRestaurant(id) {
+  return Restaurant.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        isActive: true,
+      },
+    },
+    {
+      new: true,
+    },
+  );
+}
+
+export async function permanentlyDeleteRestaurant(id) {
+  const session = await mongoose.startSession();
+
+  try {
+    let deletedRestaurant;
+
+    await session.withTransaction(async () => {
+      deletedRestaurant = await Restaurant.findByIdAndDelete(id, { session });
+
+      if (!deletedRestaurant) {
+        return;
+      }
+
+      await Review.deleteMany({ restaurant: id }, { session });
+
+      await Favorite.deleteMany({ restaurant: id }, { session });
+    });
+
+    return deletedRestaurant;
+  } finally {
+    await session.endSession();
+  }
+}

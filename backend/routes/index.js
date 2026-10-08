@@ -3,6 +3,7 @@ import authRouter from "./auth.routes.js";
 import restaurantRouter from "./restaurant.routes.js";
 import reviewRouter from "./review.routes.js";
 import favoriteRouter from "./favorite.routes.js";
+import adminRestaurantRouter from "./adminRestaurant.routes.js";
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use("/auth", authRouter);
 router.use("/restaurants", restaurantRouter);
 router.use("/reviews", reviewRouter);
 router.use("/favorites", favoriteRouter);
+router.use("/admin/restaurants", adminRestaurantRouter);
 
 export default router;
