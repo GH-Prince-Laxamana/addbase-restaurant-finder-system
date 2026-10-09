@@ -1,3 +1,4 @@
+
 import {
     useCallback,
     useEffect,
@@ -7,14 +8,17 @@ import {
 } from "react";
 
 import type { User } from "../types/api";
+
 import {
     getCurrentUser,
-    loginAdmin,
+    loginAdmin as loginAdminService,
     loginUser,
     logoutUser,
     refreshAccessToken,
     registerUser,
 } from "../services/auth.service";
+
+import { setApiAccessToken } from "../services/api";
 import { AuthContext } from "./auth-context";
 
 interface AuthProviderProps {
@@ -37,6 +41,13 @@ export function AuthProvider({
                 const { accessToken: newAccessToken } =
                     await refreshAccessToken();
 
+                if (cancelled) {
+                    return;
+                }
+
+                // Set the token before making the /auth/me request.
+                setApiAccessToken(newAccessToken);
+
                 const { user: currentUser } =
                     await getCurrentUser();
 
@@ -51,6 +62,7 @@ export function AuthProvider({
                     return;
                 }
 
+                setApiAccessToken(null);
                 setAccessToken(null);
                 setUser(null);
             } finally {
@@ -60,7 +72,7 @@ export function AuthProvider({
             }
         }
 
-        restoreSession();
+        void restoreSession();
 
         return () => {
             cancelled = true;
@@ -74,6 +86,7 @@ export function AuthProvider({
                 password,
             });
 
+            setApiAccessToken(response.accessToken);
             setAccessToken(response.accessToken);
             setUser(response.user);
         },
@@ -82,11 +95,12 @@ export function AuthProvider({
 
     const adminLogin = useCallback(
         async (email: string, password: string) => {
-            const response = await loginAdmin({
+            const response = await loginAdminService({
                 email,
                 password,
             });
 
+            setApiAccessToken(response.accessToken);
             setAccessToken(response.accessToken);
             setUser(response.user);
         },
@@ -112,6 +126,7 @@ export function AuthProvider({
         try {
             await logoutUser();
         } finally {
+            setApiAccessToken(null);
             setAccessToken(null);
             setUser(null);
         }

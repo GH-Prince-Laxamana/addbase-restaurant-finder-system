@@ -1,4 +1,11 @@
+
 const API_BASE_URL = "/api/v1";
+
+let accessToken: string | null = null;
+
+export function setApiAccessToken(token: string | null) {
+    accessToken = token;
+}
 
 interface ApiErrorResponse {
     error?: {
@@ -37,6 +44,9 @@ async function request<T>(
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
+            ...(accessToken
+                ? { Authorization: `Bearer ${accessToken}` }
+                : {}),
             ...options.headers,
         },
     });
