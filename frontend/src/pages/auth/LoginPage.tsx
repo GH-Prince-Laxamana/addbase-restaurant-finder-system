@@ -20,6 +20,10 @@ export function LoginPage({ mode = "user" }: LoginPageProps) {
     const navigate = useNavigate();
     const location = useLocation();
 
+    const successMessage = (
+        location.state as { message?: string } | null
+    )?.message;
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
@@ -93,6 +97,15 @@ export function LoginPage({ mode = "user" }: LoginPageProps) {
                 </div>
 
                 <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+                    {successMessage && (
+                        <div
+                            role="status"
+                            className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+                        >
+                            {successMessage}
+                        </div>
+                    )}
+
                     {errorMessage && (
                         <div
                             role="alert"
