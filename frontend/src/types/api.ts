@@ -24,6 +24,21 @@ export interface Review {
     updatedAt: string;
 }
 
+export interface RestaurantReview {
+    _id: string;
+    restaurant: string;
+    user:
+    | string
+    | {
+        _id: string;
+        name: string;
+    };
+    score: number;
+    comment: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface Restaurant {
     _id: string;
     restaurantId: string;
@@ -81,11 +96,18 @@ export interface MeResponse {
 }
 
 export interface ReviewListResponse {
-    reviews: Review[];
+    reviews: RestaurantReview[];
 }
 
 export interface Favorite {
     _id: string;
     restaurant: Restaurant;
+    createdAt: string;
+}
+
+export interface FavoriteRecord {
+    _id: string;
+    user: string;
+    restaurant: string;
     createdAt: string;
 }

@@ -1,5 +1,6 @@
 import {
   createRestaurant,
+  findAdminRestaurants,
   findRestaurantById,
   permanentlyDeleteRestaurant,
   restoreRestaurant,
@@ -116,4 +117,43 @@ export async function permanentlyRemoveRestaurant(id) {
   }
 
   return restaurant;
+}
+
+function parsePositiveInteger(value, fallback) {
+  const parsed = Number(value);
+
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+export async function getAdminRestaurantList(query) {
+  const page = parsePositiveInteger(query.page, 1);
+  const limit = Math.min(parsePositiveInteger(query.limit, 20), 50);
+
+  const status = query.status || "all";
+
+  if (!["all", "active", "inactive"].includes(status)) {
+    const error = new Error("Status must be all, active, or inactive.");
+    error.statusCode = 400;
+    error.code = "INVALID_RESTAURANT_STATUS";
+    throw error;
+  }
+
+  const sort = query.sort || "name";
+
+  if (!["name", "rating", "reviews"].includes(sort)) {
+    const error = new Error("Sort must be name, rating, or reviews.");
+    error.statusCode = 400;
+    error.code = "INVALID_SORT";
+    throw error;
+  }
+
+  return findAdminRestaurants({
+    q: query.q?.trim() || undefined,
+    borough: query.borough?.trim() || undefined,
+    cuisine: query.cuisine?.trim() || undefined,
+    status,
+    sort,
+    page,
+    limit,
+  });
 }

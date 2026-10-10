@@ -4,6 +4,7 @@ import {
   editRestaurant,
   permanentlyRemoveRestaurant,
   reactivateRestaurant,
+  getAdminRestaurantList,
 } from "../services/adminRestaurant.service.js";
 
 export async function createRestaurant(req, res) {
@@ -42,4 +43,10 @@ export async function permanentlyDeleteRestaurant(req, res) {
   await permanentlyRemoveRestaurant(req.params.id);
 
   res.status(204).send();
+}
+
+export async function listAdminRestaurants(req, res) {
+  const data = await getAdminRestaurantList(req.query);
+
+  res.json(data);
 }

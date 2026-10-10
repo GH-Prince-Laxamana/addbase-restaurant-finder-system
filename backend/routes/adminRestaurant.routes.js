@@ -6,6 +6,7 @@ import {
   permanentlyDeleteRestaurant,
   restoreRestaurant,
   updateRestaurant,
+  listAdminRestaurants,
 } from "../controllers/adminRestaurant.controller.js";
 import {
   validateAdminRestaurantCreate,
@@ -21,5 +22,6 @@ router.patch("/:id", validateAdminRestaurantUpdate, updateRestaurant);
 router.delete("/:id", deleteRestaurant);
 router.patch("/:id/restore", restoreRestaurant);
 router.delete("/:id/permanent", permanentlyDeleteRestaurant);
+router.get("/", listAdminRestaurants);
 
 export default router;
