@@ -68,7 +68,6 @@ export function useRestaurantReviews(
             }
 
             setIsMutating(true);
-            setError(null);
 
             try {
                 const review = await createRestaurantReview(
@@ -79,13 +78,9 @@ export function useRestaurantReviews(
                 refetch();
                 return review;
             } catch (err) {
-                const nextError =
-                    err instanceof Error
-                        ? err
-                        : new Error("Unable to create review.");
-
-                setError(nextError);
-                throw nextError;
+                throw err instanceof Error
+                    ? err
+                    : new Error("Unable to create review.");
             } finally {
                 setIsMutating(false);
             }
@@ -99,7 +94,6 @@ export function useRestaurantReviews(
             input: Partial<ReviewInput>
         ) => {
             setIsMutating(true);
-            setError(null);
 
             try {
                 const review = await updateReview(reviewId, input);
@@ -107,13 +101,9 @@ export function useRestaurantReviews(
                 refetch();
                 return review;
             } catch (err) {
-                const nextError =
-                    err instanceof Error
-                        ? err
-                        : new Error("Unable to update review.");
-
-                setError(nextError);
-                throw nextError;
+                throw err instanceof Error
+                    ? err
+                    : new Error("Unable to update review.");
             } finally {
                 setIsMutating(false);
             }
@@ -124,19 +114,14 @@ export function useRestaurantReviews(
     const remove = useCallback(
         async (reviewId: string) => {
             setIsMutating(true);
-            setError(null);
 
             try {
                 await deleteReview(reviewId);
                 refetch();
             } catch (err) {
-                const nextError =
-                    err instanceof Error
-                        ? err
-                        : new Error("Unable to delete review.");
-
-                setError(nextError);
-                throw nextError;
+                throw err instanceof Error
+                    ? err
+                    : new Error("Unable to delete review.");
             } finally {
                 setIsMutating(false);
             }
