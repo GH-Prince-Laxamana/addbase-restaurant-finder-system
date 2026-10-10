@@ -11,8 +11,12 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { ApiError } from "../../services/api";
 
-export function LoginPage() {
-    const { login } = useAuth();
+interface LoginPageProps {
+    mode?: "user" | "admin";
+}
+
+export function LoginPage({ mode = "user" }: LoginPageProps) {
+    const { login, adminLogin } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -31,28 +35,31 @@ export function LoginPage() {
         setIsSubmitting(true);
 
         try {
-            await login(email, password);
+            if (mode === "admin") {
+                await adminLogin(email, password);
+            } else {
+                await login(email, password);
+            }
 
             const from =
                 (
                     location.state as
-                        | {
-                              from?: {
-                                  pathname?: string;
-                                  search?: string;
-                                  hash?: string;
-                              };
-                          }
-                        | null
+                    | {
+                        from?: {
+                            pathname?: string;
+                            search?: string;
+                            hash?: string;
+                        };
+                    }
+                    | null
                 )?.from;
 
-            const destination = `${from?.pathname ?? "/"}${
-                from?.search ?? ""
-            }${from?.hash ?? ""}`;
+            const destination =
+                mode === "admin"
+                    ? "/admin"
+                    : `${from?.pathname ?? "/"}${from?.search ?? ""}${from?.hash ?? ""}`;
 
-            navigate(destination, {
-                replace: true,
-            });
+            navigate(destination, { replace: true });
         } catch (error) {
             if (error instanceof ApiError) {
                 setErrorMessage(error.message);
@@ -75,12 +82,13 @@ export function LoginPage() {
                     </p>
 
                     <h1 className="text-4xl font-bold tracking-tight text-neutral-950">
-                        Welcome back
+                        {mode === "admin" ? "Administrator sign in" : "Welcome back"}
                     </h1>
 
                     <p className="mt-3 text-neutral-600">
-                        Sign in to manage your reviews
-                        and favorite restaurants.
+                        {mode === "admin"
+                            ? "Sign in to manage restaurants and reviews."
+                            : "Sign in to manage your reviews and favorite restaurants."}
                     </p>
                 </div>
 
@@ -160,15 +168,17 @@ export function LoginPage() {
                         </button>
                     </form>
 
-                    <p className="mt-6 text-center text-sm text-neutral-600">
-                        Don't have an account?{" "}
-                        <Link
-                            to="/register"
-                            className="font-semibold text-neutral-950 underline underline-offset-4"
-                        >
-                            Create one
-                        </Link>
-                    </p>
+                    {mode === "user" && (
+                        <p className="mt-6 text-center text-sm text-neutral-600">
+                            Don't have an account?{" "}
+                            <Link
+                                to="/register"
+                                className="font-semibold text-neutral-950 underline underline-offset-4"
+                            >
+                                Create one
+                            </Link>
+                        </p>
+                    )}
                 </div>
             </div>
         </section>

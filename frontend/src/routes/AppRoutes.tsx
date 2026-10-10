@@ -24,6 +24,11 @@ export function AppRoutes() {
     return (
         <BrowserRouter>
             <Routes>
+                <Route
+                    path="/admin/login"
+                    element={<LoginPage mode="admin" />}
+                />
+
                 <Route element={<PublicLayout />}>
                     <Route path="/" element={<HomePage />} />
                     <Route
@@ -38,8 +43,8 @@ export function AppRoutes() {
                         path="/login"
                         element={<LoginPage />}
                     />
-                    <Route path="/register" 
-                    element={<RegisterPage />} />
+                    <Route path="/register"
+                        element={<RegisterPage />} />
 
                     <Route element={<ProtectedRoute />}>
                         <Route

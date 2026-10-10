@@ -38,10 +38,22 @@ export function loginAdmin(input: LoginInput) {
     );
 }
 
-export function refreshAccessToken() {
-    return api.post<RefreshResponse>(
-        "/auth/refresh"
-    );
+let refreshPromise: Promise<RefreshResponse> | null = null;
+
+export function refreshAccessToken(): Promise<RefreshResponse> {
+    if (!refreshPromise) {
+        refreshPromise = api.post<RefreshResponse>(
+            "/auth/refresh"
+        );
+    }
+
+    const currentPromise = refreshPromise;
+
+    return currentPromise.finally(() => {
+        if (refreshPromise === currentPromise) {
+            refreshPromise = null;
+        }
+    });
 }
 
 export function logoutUser() {
