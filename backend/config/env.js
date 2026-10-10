@@ -35,11 +35,6 @@ const env = {
 
 if (env.nodeEnv === "production") {
   if (
-    !process.env.CLIENT_ORIGIN ||
-    new URL(env.clientOrigin).protocol !== "https:"
-  )
-    throw new Error("Production CLIENT_ORIGIN must use HTTPS.");
-  if (
     env.jwtAccessSecret.length < 32 ||
     env.jwtRefreshSecret.length < 32 ||
     env.jwtAccessSecret === env.jwtRefreshSecret
