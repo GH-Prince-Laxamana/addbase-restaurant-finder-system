@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, refreshApiAccessToken } from "./api";
 import type {
     AuthResponse,
     RefreshResponse,
@@ -38,22 +38,10 @@ export function loginAdmin(input: LoginInput) {
     );
 }
 
-let refreshPromise: Promise<RefreshResponse> | null = null;
+export async function refreshAccessToken(): Promise<RefreshResponse> {
+    const accessToken = await refreshApiAccessToken();
 
-export function refreshAccessToken(): Promise<RefreshResponse> {
-    if (!refreshPromise) {
-        refreshPromise = api.post<RefreshResponse>(
-            "/auth/refresh"
-        );
-    }
-
-    const currentPromise = refreshPromise;
-
-    return currentPromise.finally(() => {
-        if (refreshPromise === currentPromise) {
-            refreshPromise = null;
-        }
-    });
+    return { accessToken };
 }
 
 export function logoutUser() {

@@ -18,7 +18,11 @@ import {
     registerUser,
 } from "../services/auth.service";
 
-import { setApiAccessToken } from "../services/api";
+import {
+    setApiAccessToken,
+    setApiAccessTokenListener,
+    setAuthExpiredHandler,
+} from "../services/api";
 import { AuthContext } from "./auth-context";
 
 interface AuthProviderProps {
@@ -32,6 +36,19 @@ export function AuthProvider({
     const [accessToken, setAccessToken] =
         useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        setApiAccessTokenListener(setAccessToken);
+
+        setAuthExpiredHandler(() => {
+            setUser(null);
+        });
+
+        return () => {
+            setApiAccessTokenListener(null);
+            setAuthExpiredHandler(null);
+        };
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
