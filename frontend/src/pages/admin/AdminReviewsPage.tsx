@@ -34,7 +34,7 @@ export function AdminReviewsPage() {
         setActionMessage("");
 
         try {
-            const restaurantId = reviews.find(review => review._id === reviewId)?.restaurant._id;
+            const restaurantId = reviews.find(review => review._id === reviewId)?.restaurant?._id;
             await remove(reviewId);
             invalidateRestaurantReviews();
             await refreshRestaurantCards(restaurantId);
@@ -128,7 +128,7 @@ export function AdminReviewsPage() {
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h2 className="font-semibold">
-                                            {review.restaurant.name}
+                                            {review.restaurant?.name ?? "Deleted restaurant"}
                                         </h2>
                                         <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs">
                                             <StarRating value={review.score} />
@@ -136,7 +136,7 @@ export function AdminReviewsPage() {
                                     </div>
 
                                     <p className="mt-1 text-xs text-neutral-500">
-                                        Restaurant ID: {review.restaurant.restaurantId}
+                                        Restaurant ID: {review.restaurant?.restaurantId ?? "Unavailable"}
                                     </p>
 
                                     <p className="mt-4 whitespace-pre-wrap text-sm text-neutral-800">
@@ -145,10 +145,10 @@ export function AdminReviewsPage() {
 
                                     <div className="mt-4 space-y-1 text-xs text-neutral-500">
                                         <p>
-                                            Reviewer: {review.user.name}
+                                            Reviewer: {review.user?.name ?? "Deleted user"}
                                         </p>
                                         <p>
-                                            Email: {review.user.email}
+                                            Email: {review.user?.email ?? "Unavailable"}
                                         </p>
                                         <p>
                                             Submitted:{" "}
