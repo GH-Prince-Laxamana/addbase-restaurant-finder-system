@@ -245,47 +245,47 @@ export function RestaurantDetailPage() {
                     <>
                         <button type="button" className={buttonStyles("primary", "mt-5")} onClick={() => { setReviewError(""); setShowReviewForm(true); }}>Write a review</button>
                         {showReviewForm && <Modal title="Write a review" busy={isMutating} onClose={() => setShowReviewForm(false)}>
-                        <form
-                        onSubmit={handleReviewSubmit}
-                        className="space-y-4"
-                    >
+                            <form
+                                onSubmit={handleReviewSubmit}
+                                className="space-y-4"
+                            >
 
 
-                        <StarRatingInput value={Number(score)} onChange={value => setScore(String(value))} disabled={isMutating} autoFocus />
+                                <StarRatingInput value={Number(score)} onChange={value => setScore(String(value))} disabled={isMutating} autoFocus />
 
-                        <label className="block text-sm">
-                            <span className="mb-1 block">Comment</span>
-                            <textarea
-                                value={comment}
-                                onChange={(event) => setComment(event.target.value)}
-                                maxLength={1000}
-                                required
-                                rows={4}
-                                placeholder="Share your experience..."
-                                className={`${fieldStyles} resize-y`}
-                            />
-                        </label>
+                                <label className="block text-sm">
+                                    <span className="mb-1 block">Comment</span>
+                                    <textarea
+                                        value={comment}
+                                        onChange={(event) => setComment(event.target.value)}
+                                        maxLength={1000}
+                                        required
+                                        rows={4}
+                                        placeholder="Share your experience..."
+                                        className={`${fieldStyles} resize-y`}
+                                    />
+                                </label>
 
-                        {reviewError && (
-                            <p role="alert" className="text-sm text-red-700">
-                                {reviewError}
-                            </p>
-                        )}
+                                {reviewError && (
+                                    <p role="alert" className="text-sm text-red-700">
+                                        {reviewError}
+                                    </p>
+                                )}
 
-                        {reviewMessage && (
-                            <p role="status" className="text-sm text-green-700">
-                                {reviewMessage}
-                            </p>
-                        )}
+                                {reviewMessage && (
+                                    <p role="status" className="text-sm text-green-700">
+                                        {reviewMessage}
+                                    </p>
+                                )}
 
-                        <button
-                            type="submit"
-                            disabled={isMutating || Number(score) < 1 || !comment.trim()}
-                            className={buttonStyles("primary", "disabled:opacity-50")}
-                        >
-                            {isMutating ? "Submitting..." : "Submit review"}
-                        </button>
-                    </form></Modal>}
+                                <button
+                                    type="submit"
+                                    disabled={isMutating || Number(score) < 1 || !comment.trim()}
+                                    className={buttonStyles("primary", "disabled:opacity-50")}
+                                >
+                                    {isMutating ? "Submitting..." : "Submit review"}
+                                </button>
+                            </form></Modal>}
                     </>
                 ) : (
                     <p className="mt-4 text-neutral-600">
@@ -326,7 +326,7 @@ export function RestaurantDetailPage() {
                     <ul className="mt-[30px]">
                         {reviews.map((review) => {
                             const reviewUserId =
-                                typeof review.user === "object"
+                                review.user && typeof review.user === "object"
                                     ? review.user._id
                                     : review.user;
 
@@ -335,8 +335,12 @@ export function RestaurantDetailPage() {
                             return (
                                 <li key={review._id} className="border-t border-neutral-200 py-7">
                                     <div className="flex flex-wrap items-center gap-2.5 min-[481px]:flex-nowrap min-[481px]:gap-[14px]">
-                                        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-neutral-100 text-[.75rem] font-semibold text-neutral-700" aria-hidden="true">{(typeof review.user === "object" ? review.user.name : "Diner").trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase()}</span>
-                                        <div className="min-w-0 flex-1 max-[480px]:basis-[calc(100%-54px)]"><p className="flex flex-wrap items-baseline gap-3 text-[.9rem] font-semibold">{typeof review.user === "object" ? review.user.name : "Hapag diner"}{isOwnReview && <span className="text-[.68rem] font-medium text-burgundy">Your review</span>}</p><time className="mt-[3px] block text-[.72rem] text-neutral-600" dateTime={review.createdAt}>{new Date(review.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</time></div>
+                                        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-neutral-100 text-[.75rem] font-semibold text-neutral-700" aria-hidden="true">{(review.user && typeof review.user === "object"
+                                            ? review.user.name
+                                            : "Diner").trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase()}</span>
+                                        <div className="min-w-0 flex-1 max-[480px]:basis-[calc(100%-54px)]"><p className="flex flex-wrap items-baseline gap-3 text-[.9rem] font-semibold">{review.user && typeof review.user === "object"
+                                            ? review.user.name
+                                            : "Hapag diner"}{isOwnReview && <span className="text-[.68rem] font-medium text-burgundy">Your review</span>}</p><time className="mt-[3px] block text-[.72rem] text-neutral-600" dateTime={review.createdAt}>{new Date(review.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</time></div>
                                         <span className="self-start pt-[5px] max-[480px]:ml-[54px]"><StarRating value={review.score} /></span>
                                     </div>
                                     <p className="mt-5 mb-2.5 max-w-[70ch] whitespace-pre-wrap text-[.9rem] leading-[1.9] text-neutral-800 [overflow-wrap:anywhere] md:ml-[58px]">{review.comment}</p>
@@ -371,48 +375,48 @@ export function RestaurantDetailPage() {
 
                                     {editingReviewId === review._id && (
                                         <Modal title="Edit your review" busy={isMutating} onClose={() => setEditingReviewId(null)}>
-                        <form
-                                            onSubmit={handleReviewUpdate}
-                                            className="space-y-4"
-                                        >
-                                            <StarRatingInput value={Number(editScore)} onChange={value => setEditScore(String(value))} disabled={isMutating} autoFocus />
+                                            <form
+                                                onSubmit={handleReviewUpdate}
+                                                className="space-y-4"
+                                            >
+                                                <StarRatingInput value={Number(editScore)} onChange={value => setEditScore(String(value))} disabled={isMutating} autoFocus />
 
-                                            <label className="block text-sm">
-                                                <span className="mb-1 block">Comment</span>
-                                                <textarea
-                                                    value={editComment}
-                                                    onChange={(event) =>
-                                                        setEditComment(event.target.value)
-                                                    }
-                                                    required
-                                                    maxLength={1000}
-                                                    rows={3}
-                                                    className={`${fieldStyles} resize-y`}
-                                                />
-                                            </label>
+                                                <label className="block text-sm">
+                                                    <span className="mb-1 block">Comment</span>
+                                                    <textarea
+                                                        value={editComment}
+                                                        onChange={(event) =>
+                                                            setEditComment(event.target.value)
+                                                        }
+                                                        required
+                                                        maxLength={1000}
+                                                        rows={3}
+                                                        className={`${fieldStyles} resize-y`}
+                                                    />
+                                                </label>
 
-                                            {reviewActionError && <p role="alert" className="text-red-700">{reviewActionError}</p>}
-                                            <div className="flex gap-3">
-                                                <button
-                                                    type="submit"
-                                                    disabled={
-                                                        isMutating || !editComment.trim()
-                                                    }
-                                                    className={buttonStyles("primary", "disabled:opacity-50")}
-                                                >
-                                                    {isMutating ? "Saving..." : "Save changes"}
-                                                </button>
+                                                {reviewActionError && <p role="alert" className="text-red-700">{reviewActionError}</p>}
+                                                <div className="flex gap-3">
+                                                    <button
+                                                        type="submit"
+                                                        disabled={
+                                                            isMutating || !editComment.trim()
+                                                        }
+                                                        className={buttonStyles("primary", "disabled:opacity-50")}
+                                                    >
+                                                        {isMutating ? "Saving..." : "Save changes"}
+                                                    </button>
 
-                                                <button
-                                                    type="button"
-                                                    disabled={isMutating}
-                                                    onClick={() => setEditingReviewId(null)}
-                                                    className={buttonStyles("secondary")}
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </form>
+                                                    <button
+                                                        type="button"
+                                                        disabled={isMutating}
+                                                        onClick={() => setEditingReviewId(null)}
+                                                        className={buttonStyles("secondary")}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </form>
                                         </Modal>
                                     )}
                                 </li>
