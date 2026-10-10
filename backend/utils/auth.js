@@ -30,6 +30,7 @@ export function createRefreshToken(user) {
   return jwt.sign(
     {
       sub: user._id.toString(),
+      jti: crypto.randomUUID(),
     },
     env.jwtRefreshSecret,
     {

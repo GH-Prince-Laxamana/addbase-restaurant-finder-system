@@ -7,28 +7,26 @@ import {
 
 import { PublicLayout } from "../layouts/PublicLayout";
 import { AdminLayout } from "../layouts/AdminLayout";
-import { ProtectedRoute } from "./ProtectedRoute";
-import { AdminRoute } from "./AdminRoute";
 
 import { HomePage } from "../pages/public/HomePage";
 import { RestaurantsPage } from "../pages/public/RestaurantsPage";
 import { RestaurantDetailPage } from "../pages/public/RestaurantDetailPage";
 import { FavoritesPage } from "../pages/public/FavoritesPage";
 
-import { LoginPage } from "../pages/auth/LoginPage";
+import { ProtectedRoute } from "./ProtectedRoute";
 import RegisterPage from "../pages/auth/RegisterPage";
+import { GuestRoute } from "./GuestRoute";
+import { LoginPage } from "../pages/auth/LoginPage";
+
+import { AdminRoute } from "./AdminRoute";
 import { AdminDashboardPage } from "../pages/admin/AdminDashboardPage";
+
 import { NotFoundPage } from "../pages/NotFoundPage";
 
 export function AppRoutes() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route
-                    path="/admin/login"
-                    element={<LoginPage mode="admin" />}
-                />
-
                 <Route element={<PublicLayout />}>
                     <Route path="/" element={<HomePage />} />
                     <Route
@@ -39,12 +37,10 @@ export function AppRoutes() {
                         path="/restaurants/:id"
                         element={<RestaurantDetailPage />}
                     />
-                    <Route
-                        path="/login"
-                        element={<LoginPage />}
-                    />
-                    <Route path="/register"
-                        element={<RegisterPage />} />
+                    <Route element={<GuestRoute />}>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
+                    </Route>
 
                     <Route element={<ProtectedRoute />}>
                         <Route
@@ -52,6 +48,13 @@ export function AppRoutes() {
                             element={<FavoritesPage />}
                         />
                     </Route>
+                </Route>
+
+                <Route element={<GuestRoute />}>
+                    <Route
+                        path="/admin/login"
+                        element={<LoginPage mode="admin" />}
+                    />
                 </Route>
 
                 <Route element={<AdminRoute />}>
