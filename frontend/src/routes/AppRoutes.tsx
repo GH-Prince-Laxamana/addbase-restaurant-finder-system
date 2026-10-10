@@ -21,6 +21,7 @@ import { LoginPage } from "../pages/auth/LoginPage";
 import { AdminRoute } from "./AdminRoute";
 import { AdminDashboardPage } from "../pages/admin/AdminDashboardPage";
 import { AdminRestaurantsPage } from "../pages/admin/AdminRestaurantsPage";
+import { AdminReviewsPage } from "../pages/admin/AdminReviewsPage";
 
 import { NotFoundPage } from "../pages/NotFoundPage";
 
@@ -67,6 +68,10 @@ export function AppRoutes() {
                         <Route
                             path="/admin/restaurants"
                             element={<AdminRestaurantsPage />}
+                        />
+                        <Route
+                            path="/admin/reviews"
+                            element={<AdminReviewsPage />}
                         />
                     </Route>
                 </Route>
