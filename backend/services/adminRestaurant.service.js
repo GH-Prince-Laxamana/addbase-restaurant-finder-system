@@ -57,7 +57,22 @@ function normalizeRestaurantInput(data) {
 }
 
 export async function addRestaurant(data) {
-  return createRestaurant(normalizeRestaurantInput(data));
+  try {
+    return await createRestaurant(normalizeRestaurantInput(data));
+  } catch (error) {
+    if (error?.code === 11000) {
+      const conflictError = new Error(
+        "A restaurant with this restaurant ID already exists.",
+      );
+
+      conflictError.statusCode = 409;
+      conflictError.code = "RESTAURANT_ID_ALREADY_EXISTS";
+
+      throw conflictError;
+    }
+
+    throw error;
+  }
 }
 
 export async function editRestaurant(id, data) {
@@ -110,6 +125,23 @@ export async function reactivateRestaurant(id) {
 }
 
 export async function permanentlyRemoveRestaurant(id) {
+  const existingRestaurant = await findRestaurantById(id);
+
+  if (!existingRestaurant) {
+    throw notFoundError();
+  }
+
+  if (existingRestaurant.isActive) {
+    const error = new Error(
+      "Deactivate the restaurant before permanently deleting it.",
+    );
+
+    error.statusCode = 409;
+    error.code = "RESTAURANT_MUST_BE_INACTIVE";
+
+    throw error;
+  }
+
   const restaurant = await permanentlyDeleteRestaurant(id);
 
   if (!restaurant) {
