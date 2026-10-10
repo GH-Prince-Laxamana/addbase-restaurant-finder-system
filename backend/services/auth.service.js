@@ -114,12 +114,23 @@ export async function refreshAuthentication(refreshToken) {
 
   const tokenHash = hashToken(refreshToken);
 
-  const storedToken = await RefreshToken.findOne({
-    tokenHash,
-    revokedAt: null,
-  });
+  const now = new Date();
 
-  if (!storedToken || storedToken.expiresAt <= new Date()) {
+  const storedToken = await RefreshToken.findOneAndUpdate(
+    {
+      tokenHash,
+      revokedAt: null,
+      expiresAt: { $gt: now },
+    },
+    {
+      $set: { revokedAt: now },
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!storedToken) {
     const error = new Error("Invalid or expired refresh token.");
     error.statusCode = 401;
     error.code = "INVALID_REFRESH_TOKEN";
@@ -134,9 +145,6 @@ export async function refreshAuthentication(refreshToken) {
     error.code = "USER_NOT_FOUND";
     throw error;
   }
-
-  storedToken.revokedAt = new Date();
-  await storedToken.save();
 
   return createAuthTokens(user);
 }
