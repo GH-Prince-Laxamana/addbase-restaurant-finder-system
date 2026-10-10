@@ -169,7 +169,7 @@ export function HomePage() {
                                             src={getRestaurantImage(restaurant._id)}
                                             alt={`${restaurant.cuisine} restaurant`}
                                             loading="lazy"
-                                            className="mb-4 aspect-[16/10] w-full rounded-lg object-cover"
+                                            className="mb-4 aspect-16/10 w-full rounded-lg object-cover"
                                         />
                                         
                                         <p className="text-sm text-neutral-500">
