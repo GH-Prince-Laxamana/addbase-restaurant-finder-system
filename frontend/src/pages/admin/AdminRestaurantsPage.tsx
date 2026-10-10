@@ -1,3 +1,10 @@
+import { RestaurantEditorForm } from "../../components/RestaurantEditorForm";
+import { AdminTableSkeleton } from "../../components/LoadingSkeletons";
+import { buttonStyles, iconStyles, fieldStyles } from "../../components/ui/styles";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { StarRating } from "../../components/StarRating";
+import { Modal } from "../../components/Modal";
+import { useConfirmation } from "../../hooks/useConfirmation";
 import { useMemo, useState, type FormEvent } from "react";
 
 import { useAdminRestaurants } from "../../hooks/useAdminRestaurants";
@@ -14,6 +21,7 @@ import type { Restaurant } from "../../types/api";
 
 
 export function AdminRestaurantsPage() {
+    const { confirm, confirmation } = useConfirmation();
     const [searchInput, setSearchInput] = useState("");
     const [q, setQ] = useState("");
     const [borough, setBorough] = useState("");
@@ -63,7 +71,7 @@ export function AdminRestaurantsPage() {
         [q, borough, cuisine, status, sort, page]
     );
 
-    const { data, isLoading, error, refetch } =
+    const { data, isLoading, showSkeletons, error, refetch } =
         useAdminRestaurants(query);
 
     function handleSearch(event: FormEvent<HTMLFormElement>) {
@@ -240,8 +248,9 @@ export function AdminRestaurantsPage() {
     }
 
     async function handleDeactivateRestaurant(id: string) {
-        const confirmed = window.confirm(
-            "Deactivate this restaurant? It will no longer appear in public listings."
+        const confirmed = await confirm(
+            "Deactivate this restaurant? It will no longer appear in public listings.",
+            "Deactivate"
         );
 
         if (!confirmed) return;
@@ -266,6 +275,8 @@ export function AdminRestaurantsPage() {
     }
 
     async function handleRestoreRestaurant(id: string) {
+        if (!await confirm("Restore this restaurant? It will appear in public listings again.", "Restore restaurant")) return;
+
         setActionInProgressId(id);
         setActionError("");
         setActionMessage("");
@@ -286,9 +297,10 @@ export function AdminRestaurantsPage() {
     }
 
     async function handlePermanentDeleteRestaurant(id: string) {
-        const confirmed = window.confirm(
+        const confirmed = await confirm(
             "PERMANENTLY DELETE this restaurant?\n\n" +
-            "This cannot be undone. Its associated reviews and favorites will also be deleted."
+            "This cannot be undone. Its associated reviews and favorites will also be deleted.",
+            "Delete permanently"
         );
 
         if (!confirmed) return;
@@ -314,13 +326,14 @@ export function AdminRestaurantsPage() {
     }
 
     return (
-        <main className="mx-auto max-w-7xl px-6 py-10">
+        <main data-scroll-ready={!showSkeletons} className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-12">
+            {confirmation}
             <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <p className="text-sm font-medium text-neutral-500">
                         Administration
                     </p>
-                    <h1 className="mt-2 text-3xl font-bold">
+                    <h1 className="mt-2 text-[clamp(2.2rem,3.7vw,3.4rem)] font-medium">
                         Restaurant management
                     </h1>
                     <p className="mt-2 text-neutral-600">
@@ -329,227 +342,20 @@ export function AdminRestaurantsPage() {
                 </div>
 
                 {showCreateForm && (
-                    <form
-                        onSubmit={handleCreateRestaurant}
-                        className="mb-8 rounded-xl border border-neutral-200 p-6"
-                    >
-                        <h2 className="text-xl font-semibold">Add a restaurant</h2>
-                        <p className="mt-2 text-sm text-neutral-600">
-                            Enter the restaurant details. It will be created as active.
-                        </p>
-
-                        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <label className="text-sm">
-                                <span className="mb-1 block">Restaurant ID</span>
-                                <input
-                                    required
-                                    value={newRestaurant.restaurantId}
-                                    onChange={(event) =>
-                                        updateRestaurantField("restaurantId", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">Name</span>
-                                <input
-                                    required
-                                    value={newRestaurant.name}
-                                    onChange={(event) =>
-                                        updateRestaurantField("name", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">Cuisine</span>
-                                <input
-                                    required
-                                    value={newRestaurant.cuisine}
-                                    onChange={(event) =>
-                                        updateRestaurantField("cuisine", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">Borough</span>
-                                <input
-                                    required
-                                    value={newRestaurant.borough}
-                                    onChange={(event) =>
-                                        updateRestaurantField("borough", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">Building (optional)</span>
-                                <input
-                                    value={newRestaurant.address.building ?? ""}
-                                    onChange={(event) =>
-                                        updateAddressField("building", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">Street</span>
-                                <input
-                                    required
-                                    value={newRestaurant.address.street}
-                                    onChange={(event) =>
-                                        updateAddressField("street", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">ZIP code</span>
-                                <input
-                                    required
-                                    value={newRestaurant.address.zipcode}
-                                    onChange={(event) =>
-                                        updateAddressField("zipcode", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-                        </div>
-
-                        {createError && (
-                            <p role="alert" className="mt-4 text-sm text-red-700">
-                                {createError}
-                            </p>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={isCreating}
-                            className="mt-5 rounded-lg bg-neutral-950 px-5 py-3 font-medium text-white disabled:opacity-50"
-                        >
-                            {isCreating ? "Creating..." : "Create restaurant"}
-                        </button>
-                    </form>
+                    <Modal title="Add a restaurant" busy={isCreating} onClose={() => setShowCreateForm(false)}>
+                        <RestaurantEditorForm mode="create" values={newRestaurant} busy={isCreating} error={createError}
+                        onSubmit={handleCreateRestaurant} onCancel={() => setShowCreateForm(false)}
+                        onFieldChange={updateRestaurantField} onAddressChange={updateAddressField}
+                        onIdChange={value => updateRestaurantField("restaurantId", value)} />
+                    </Modal>
                 )}
 
                 {editingId && editForm && (
-                    <form
-                        onSubmit={handleUpdateRestaurant}
-                        className="mb-8 rounded-xl border border-neutral-200 p-6"
-                    >
-                        <h2 className="text-xl font-semibold">Edit restaurant</h2>
-                        <p className="mt-2 text-sm text-neutral-500">
-                            Restaurant ID: {editForm.restaurantId}
-                        </p>
-
-                        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <label className="text-sm">
-                                <span className="mb-1 block">Name</span>
-                                <input
-                                    required
-                                    value={editForm.name}
-                                    onChange={(event) =>
-                                        updateEditField("name", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">Cuisine</span>
-                                <input
-                                    required
-                                    value={editForm.cuisine}
-                                    onChange={(event) =>
-                                        updateEditField("cuisine", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">Borough</span>
-                                <input
-                                    required
-                                    value={editForm.borough}
-                                    onChange={(event) =>
-                                        updateEditField("borough", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">Building</span>
-                                <input
-                                    value={editForm.address.building ?? ""}
-                                    onChange={(event) =>
-                                        updateEditAddressField("building", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">Street</span>
-                                <input
-                                    required
-                                    value={editForm.address.street}
-                                    onChange={(event) =>
-                                        updateEditAddressField("street", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-
-                            <label className="text-sm">
-                                <span className="mb-1 block">ZIP code</span>
-                                <input
-                                    required
-                                    value={editForm.address.zipcode}
-                                    onChange={(event) =>
-                                        updateEditAddressField("zipcode", event.target.value)
-                                    }
-                                    className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                                />
-                            </label>
-                        </div>
-
-                        {editError && (
-                            <p role="alert" className="mt-4 text-sm text-red-700">
-                                {editError}
-                            </p>
-                        )}
-
-                        <div className="mt-5 flex gap-3">
-                            <button
-                                type="submit"
-                                disabled={isSavingEdit}
-                                className="rounded-lg bg-neutral-950 px-5 py-3 font-medium text-white disabled:opacity-50"
-                            >
-                                {isSavingEdit ? "Saving..." : "Save changes"}
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setEditingId(null);
-                                    setEditForm(null);
-                                    setEditError("");
-                                }}
-                                className="rounded-lg border border-neutral-300 px-5 py-3"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
+                    <Modal title="Edit restaurant" busy={isSavingEdit} onClose={() => setEditingId(null)}>
+                        <RestaurantEditorForm mode="edit" values={editForm} busy={isSavingEdit} error={editError}
+                        onSubmit={handleUpdateRestaurant} onCancel={() => { setEditingId(null); setEditForm(null); setEditError(""); }}
+                        onFieldChange={updateEditField} onAddressChange={updateEditAddressField} />
+                    </Modal>
                 )}
 
                 <button
@@ -558,7 +364,7 @@ export function AdminRestaurantsPage() {
                         setShowCreateForm((current) => !current);
                         setCreateError("");
                     }}
-                    className="rounded-lg bg-neutral-950 px-5 py-3 font-medium text-white"
+                    className={buttonStyles("primary")}
                 >
                     {showCreateForm ? "Cancel" : "Add restaurant"}
                 </button>
@@ -574,11 +380,11 @@ export function AdminRestaurantsPage() {
                     onChange={(event) => setSearchInput(event.target.value)}
                     placeholder="Search by name or restaurant ID"
                     aria-label="Search restaurants"
-                    className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-4 py-3"
+                    className={fieldStyles}
                 />
                 <button
                     type="submit"
-                    className="rounded-lg bg-neutral-950 px-5 py-3 font-medium text-white"
+                    className={buttonStyles("primary")}
                 >
                     Search
                 </button>
@@ -597,7 +403,7 @@ export function AdminRestaurantsPage() {
                             setPage(1);
                         }}
                         placeholder="e.g. Bronx"
-                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
+                        className={fieldStyles}
                     />
                 </label>
 
@@ -610,7 +416,7 @@ export function AdminRestaurantsPage() {
                             setPage(1);
                         }}
                         placeholder="e.g. Bakery"
-                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
+                        className={fieldStyles}
                     />
                 </label>
 
@@ -627,7 +433,7 @@ export function AdminRestaurantsPage() {
                             );
                             setPage(1);
                         }}
-                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
+                        className={fieldStyles}
                     >
                         <option value="all">All restaurants</option>
                         <option value="active">Active only</option>
@@ -648,7 +454,7 @@ export function AdminRestaurantsPage() {
                             );
                             setPage(1);
                         }}
-                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
+                        className={fieldStyles}
                     >
                         <option value="name">Name</option>
                         <option value="rating">Highest rated</option>
@@ -685,11 +491,7 @@ export function AdminRestaurantsPage() {
                 </p>
             )}
 
-            {isLoading && (
-                <p role="status" className="py-8 text-center">
-                    Loading restaurants...
-                </p>
-            )}
+            {showSkeletons && <AdminTableSkeleton />}
 
             {error && !isLoading && (
                 <div
@@ -707,10 +509,10 @@ export function AdminRestaurantsPage() {
                 </div>
             )}
 
-            {!isLoading && !error && data && (
+            {!showSkeletons && !error && data && (
                 <>
                     {data.results.length === 0 ? (
-                        <div className="rounded-xl border border-neutral-200 p-10 text-center">
+                        <div className="p-10 text-center">
                             <h2 className="text-lg font-semibold">
                                 No restaurants found
                             </h2>
@@ -719,7 +521,7 @@ export function AdminRestaurantsPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-xl border border-neutral-200">
+                        <div className="overflow-x-auto">
                             <table className="w-full min-w-190 text-left text-sm">
                                 <thead className="bg-neutral-50 text-neutral-600">
                                     <tr>
@@ -746,7 +548,7 @@ export function AdminRestaurantsPage() {
 
                                 <tbody className="divide-y divide-neutral-200">
                                     {data.results.map((restaurant) => (
-                                        <tr key={restaurant._id}>
+                                        <tr key={restaurant._id} className="transition-colors hover:bg-neutral-50">
                                             <td className="px-5 py-4">
                                                 <p className="font-medium text-neutral-950">
                                                     {restaurant.name}
@@ -765,10 +567,7 @@ export function AdminRestaurantsPage() {
                                             </td>
 
                                             <td className="px-5 py-4 whitespace-nowrap">
-                                                {Number(
-                                                    restaurant.avgScore
-                                                ).toFixed(1)}{" "}
-                                                / 5
+                                                <StarRating value={Number(restaurant.avgScore)} showValue unrated={restaurant.scoreCount === 0} />
                                                 <span className="ml-1 text-neutral-500">
                                                     ({restaurant.scoreCount})
                                                 </span>
@@ -855,16 +654,16 @@ export function AdminRestaurantsPage() {
                             className="mt-6 flex flex-wrap items-center justify-center gap-4"
                         >
                             <button
-                                type="button"
+                                type="button" aria-label="Previous page"
                                 disabled={
                                     !data.pagination.hasPreviousPage
                                 }
                                 onClick={() =>
                                     setPage((current) => current - 1)
                                 }
-                                className="rounded-lg border border-neutral-300 px-4 py-2 disabled:opacity-40"
+                                className={iconStyles}
                             >
-                                Previous
+                                <ArrowLeft aria-hidden="true" size={20} />
                             </button>
 
                             <span className="text-sm text-neutral-600">
@@ -873,14 +672,14 @@ export function AdminRestaurantsPage() {
                             </span>
 
                             <button
-                                type="button"
+                                type="button" aria-label="Next page"
                                 disabled={!data.pagination.hasNextPage}
                                 onClick={() =>
                                     setPage((current) => current + 1)
                                 }
-                                className="rounded-lg border border-neutral-300 px-4 py-2 disabled:opacity-40"
+                                className={iconStyles}
                             >
-                                Next
+                                <ArrowRight aria-hidden="true" size={20} />
                             </button>
                         </nav>
                     )}

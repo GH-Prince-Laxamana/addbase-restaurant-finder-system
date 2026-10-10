@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { DiscoverySkeleton } from "../components/DiscoverySkeleton";
 import { useAuth } from "../hooks/useAuth";
 
 export function ProtectedRoute() {
@@ -6,7 +7,7 @@ export function ProtectedRoute() {
     const location = useLocation();
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <DiscoverySkeleton favorites />;
     }
 
     if (!isAuthenticated) {

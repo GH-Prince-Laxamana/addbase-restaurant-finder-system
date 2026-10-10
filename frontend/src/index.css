@@ -1,1 +1,92 @@
-@import "tailwindcss";
+@import "tailwindcss" source("./");
+
+@theme {
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "Montserrat", "Segoe UI", sans-serif;
+  --color-background: #f5f4ef;
+  --color-surface: #fffefa;
+  --color-burgundy: #b80202;
+  --color-burgundy-light: #950202;
+  --color-wine: #b80202;
+  --color-neutral-950: #242421;
+  --color-neutral-900: #30302b;
+  --color-neutral-800: #3f3f38;
+  --color-neutral-700: #51514a;
+  --color-neutral-600: #63635b;
+  --color-neutral-500: #6b6b62;
+  --color-neutral-300: #898980;
+  --color-neutral-200: #deded4;
+  --color-neutral-100: #eae9e2;
+  --color-neutral-50: #eeede6;
+  --color-red-700: #a20202;
+  --color-red-200: #e6b2ac;
+  --color-red-50: #faeeeb;
+  --color-green-800: #27513b;
+  --color-green-700: #386349;
+  --color-green-200: #c2d6c6;
+  --color-green-50: #eaf1e8;
+  --color-amber-700: #80530d;
+  --animate-arrive: arrive 750ms ease-out both;
+  --animate-dialog: dialog-enter 180ms ease-out;
+  @keyframes arrive {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes dialog-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Application-wide defaults only. Component appearance lives in JSX utilities. */
+@layer base {
+  html {
+    @apply bg-background text-neutral-950 text-[16px] md:text-[17px] scrollbar-gutter-stable scheme-light [font-synthesis:none];
+  }
+  body {
+    @apply m-0 font-sans leading-[1.7];
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-medium tracking-[-.035em] leading-[1.2] text-balance;
+  }
+  h1 {
+    @apply text-[clamp(2.5rem,4.8vw,4rem)];
+  }
+  h2 {
+    @apply text-[clamp(1.8rem,3vw,2.6rem)];
+  }
+  h3 {
+    @apply text-[1.3rem];
+  }
+  button {
+    @apply min-h-11 text-[15px] font-medium enabled:cursor-pointer disabled:cursor-not-allowed;
+  }
+  a,
+  button,
+  input,
+  textarea,
+  select {
+    @apply transition-colors duration-200 motion-reduce:transition-none [-webkit-tap-highlight-color:transparent];
+  }
+  a {
+    @apply hover:text-burgundy underline-offset-[5px];
+  }
+  :focus-visible {
+    @apply outline-2 outline-burgundy outline-offset-4;
+  }
+  ::selection {
+    @apply bg-burgundy text-white;
+  }
+}

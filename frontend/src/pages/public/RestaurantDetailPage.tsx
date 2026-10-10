@@ -1,12 +1,24 @@
+import { DetailSkeleton, ReviewSkeletons } from "../../components/LoadingSkeletons";
+import { buttonStyles, fieldStyles } from "../../components/ui/styles";
+import { StarRating, StarRatingInput } from "../../components/StarRating";
+import { Modal } from "../../components/Modal";
+import { useConfirmation } from "../../hooks/useConfirmation";
 import { useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
+import { RevealHeading } from "../../components/RevealHeading";
+import { getRestaurantImage } from "../../utils/restaurantImages";
 import { useAuth } from "../../hooks/useAuth";
 import { useRestaurant } from "../../hooks/useRestaurant";
 import { useRestaurantReviews } from "../../hooks/useRestaurantReviews";
 import { RestaurantFavoriteButton } from "../../components/RestaurantFavoriteButton";
 
 export function RestaurantDetailPage() {
+    const { confirm, confirmation } = useConfirmation();
     const { id } = useParams<{ id: string }>();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const listLocation = (location.state as { listLocation?: { pathname: string; search: string } } | null)?.listLocation;
+    const returnPath = listLocation && ["/restaurants", "/favorites", "/"].includes(listLocation.pathname) ? `${listLocation.pathname}${listLocation.search}` : "/restaurants";
     const { data: restaurant, isLoading, error, refetch } =
         useRestaurant(id);
 
@@ -22,7 +34,8 @@ export function RestaurantDetailPage() {
         remove,
     } = useRestaurantReviews(id);
 
-    const [score, setScore] = useState("5");
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const [score, setScore] = useState("0");
     const [comment, setComment] = useState("");
 
     const [reviewMessage, setReviewMessage] = useState("");
@@ -41,6 +54,10 @@ export function RestaurantDetailPage() {
         event.preventDefault();
         setReviewMessage("");
         setReviewError("");
+        if (Number(score) < 1 || Number(score) > 5) {
+            setReviewError("Select a star rating before submitting your review.");
+            return;
+        }
 
         try {
             await create({
@@ -49,8 +66,9 @@ export function RestaurantDetailPage() {
             });
 
             setComment("");
-            setScore("5");
+            setScore("0");
             setReviewMessage("Your review was submitted.");
+            setShowReviewForm(false);
 
             refetch();
         } catch (error) {
@@ -94,8 +112,9 @@ export function RestaurantDetailPage() {
     }
 
     async function handleReviewDelete(reviewId: string) {
-        const confirmed = window.confirm(
-            "Are you sure you want to delete your review?"
+        const confirmed = await confirm(
+            "Are you sure you want to delete your review?",
+            "Delete review"
         );
 
         if (!confirmed) return;
@@ -122,18 +141,12 @@ export function RestaurantDetailPage() {
         }
     }
 
-    if (isLoading) {
-        return (
-            <main className="mx-auto max-w-4xl px-6 py-12">
-                <p role="status">Loading restaurant...</p>
-            </main>
-        );
-    }
+    if (isLoading && !restaurant) return <DetailSkeleton />;
 
     if (error || !restaurant) {
         return (
             <main className="mx-auto max-w-4xl px-6 py-12">
-                <h1 className="text-2xl font-bold">
+                <h1 className="text-2xl font-medium">
                     Restaurant unavailable
                 </h1>
                 <p role="alert" className="mt-3 text-neutral-600">
@@ -159,20 +172,24 @@ export function RestaurantDetailPage() {
     }
 
     return (
-        <main className="mx-auto max-w-4xl px-6 py-12">
+        <main data-scroll-ready={!isReviewsLoading} className="mx-auto max-w-4xl px-6 py-12">
+            {confirmation}
             <Link
-                to="/restaurants"
+                to={returnPath}
+                onClick={event => { if (listLocation && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); navigate(-1); } }}
                 className="text-sm text-neutral-600 underline underline-offset-4"
             >
-                ← Back to restaurants
+                Back to restaurants
             </Link>
 
+            <div className="relative mt-[30px] h-[280px] overflow-hidden rounded-[20px] md:h-[400px] md:rounded-3xl"><img className="size-full object-cover" src={getRestaurantImage(restaurant._id)} alt={`${restaurant.cuisine} restaurant inspiration`} /><span className="absolute bottom-[25px] left-[25px] rounded-full bg-background/95 px-[18px] py-2.5 font-display text-[1.1rem]">Discover something delicious</span></div>
+            <p className="mt-[26px] text-center text-[.68rem] text-neutral-500">Photography is for inspiration and may not depict this restaurant.</p>
             <header className="mt-8 border-b border-neutral-200 pb-8">
                 <p className="text-sm text-neutral-500">
                     {restaurant.cuisine} · {restaurant.borough}
                 </p>
 
-                <h1 className="mt-3 text-3xl font-bold">
+                <h1 className="mt-3 text-[clamp(2.5rem,4vw,3.6rem)] font-medium">
                     {restaurant.name}
                 </h1>
 
@@ -206,7 +223,7 @@ export function RestaurantDetailPage() {
                             Average rating
                         </p>
                         <p className="mt-1 text-xl font-semibold">
-                            {Number(restaurant.avgScore).toFixed(1)} / 5
+                            <StarRating value={Number(restaurant.avgScore)} showValue unrated={restaurant.scoreCount === 0} />
                         </p>
                     </div>
 
@@ -222,29 +239,19 @@ export function RestaurantDetailPage() {
             </header>
 
             <section className="mt-10">
-                <h2 className="text-xl font-bold">Reviews</h2>
+                <RevealHeading><h2 className="flex items-baseline gap-3 text-xl font-medium">Reviews <span className="font-sans text-[.85rem] font-medium text-neutral-600">{restaurant.scoreCount}</span></h2></RevealHeading>
 
                 {user ? (
-                    <form
+                    <>
+                        <button type="button" className={buttonStyles("primary", "mt-5")} onClick={() => { setReviewError(""); setShowReviewForm(true); }}>Write a review</button>
+                        {showReviewForm && <Modal title="Write a review" busy={isMutating} onClose={() => setShowReviewForm(false)}>
+                        <form
                         onSubmit={handleReviewSubmit}
-                        className="mt-5 space-y-4 rounded-xl border border-neutral-200 p-5"
+                        className="space-y-4"
                     >
-                        <h3 className="font-semibold">Write a review</h3>
 
-                        <label className="block text-sm">
-                            <span className="mb-1 block">Rating</span>
-                            <select
-                                value={score}
-                                onChange={(event) => setScore(event.target.value)}
-                                className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                            >
-                                <option value="5">5 - Excellent</option>
-                                <option value="4">4 - Good</option>
-                                <option value="3">3 - Average</option>
-                                <option value="2">2 - Poor</option>
-                                <option value="1">1 - Very poor</option>
-                            </select>
-                        </label>
+
+                        <StarRatingInput value={Number(score)} onChange={value => setScore(String(value))} disabled={isMutating} autoFocus />
 
                         <label className="block text-sm">
                             <span className="mb-1 block">Comment</span>
@@ -255,7 +262,7 @@ export function RestaurantDetailPage() {
                                 required
                                 rows={4}
                                 placeholder="Share your experience..."
-                                className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
+                                className={`${fieldStyles} resize-y`}
                             />
                         </label>
 
@@ -273,12 +280,13 @@ export function RestaurantDetailPage() {
 
                         <button
                             type="submit"
-                            disabled={isMutating || !comment.trim()}
-                            className="rounded-lg bg-neutral-950 px-5 py-3 font-medium text-white disabled:opacity-50"
+                            disabled={isMutating || Number(score) < 1 || !comment.trim()}
+                            className={buttonStyles("primary", "disabled:opacity-50")}
                         >
                             {isMutating ? "Submitting..." : "Submit review"}
                         </button>
-                    </form>
+                    </form></Modal>}
+                    </>
                 ) : (
                     <p className="mt-4 text-neutral-600">
                         <Link
@@ -291,6 +299,7 @@ export function RestaurantDetailPage() {
                     </p>
                 )}
 
+                {reviewMessage && !showReviewForm && <p role="status" className="mt-4 text-sm text-green-700">{reviewMessage}</p>}
                 {reviewActionMessage && (
                     <p role="status" className="mt-4 text-sm text-green-700">
                         {reviewActionMessage}
@@ -304,7 +313,7 @@ export function RestaurantDetailPage() {
                 )}
 
                 {isReviewsLoading ? (
-                    <p role="status" className="mt-5">Loading reviews...</p>
+                    <ReviewSkeletons />
                 ) : reviewsError ? (
                     <p role="alert" className="mt-5 text-red-700">
                         Unable to load reviews: {reviewsError.message}
@@ -314,7 +323,7 @@ export function RestaurantDetailPage() {
                         No user reviews yet. Be the first to review this restaurant.
                     </p>
                 ) : (
-                    <ul className="mt-5 divide-y divide-neutral-200">
+                    <ul className="mt-[30px]">
                         {reviews.map((review) => {
                             const reviewUserId =
                                 typeof review.user === "object"
@@ -324,27 +333,15 @@ export function RestaurantDetailPage() {
                             const isOwnReview = user?.id === reviewUserId;
 
                             return (
-                                <li key={review._id} className="py-5">
-                                    <div className="flex flex-wrap justify-between gap-2">
-                                        <p className="font-semibold">
-                                            {typeof review.user === "object"
-                                                ? review.user.name
-                                                : "Restaurant Explorer user"}
-                                        </p>
-                                        <p className="text-sm text-neutral-600">
-                                            {review.score} / 5
-                                        </p>
+                                <li key={review._id} className="border-t border-neutral-200 py-7">
+                                    <div className="flex flex-wrap items-center gap-2.5 min-[481px]:flex-nowrap min-[481px]:gap-[14px]">
+                                        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-neutral-100 text-[.75rem] font-semibold text-neutral-700" aria-hidden="true">{(typeof review.user === "object" ? review.user.name : "Diner").trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase()}</span>
+                                        <div className="min-w-0 flex-1 max-[480px]:basis-[calc(100%-54px)]"><p className="flex flex-wrap items-baseline gap-3 text-[.9rem] font-semibold">{typeof review.user === "object" ? review.user.name : "Hapag diner"}{isOwnReview && <span className="text-[.68rem] font-medium text-burgundy">Your review</span>}</p><time className="mt-[3px] block text-[.72rem] text-neutral-600" dateTime={review.createdAt}>{new Date(review.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</time></div>
+                                        <span className="self-start pt-[5px] max-[480px]:ml-[54px]"><StarRating value={review.score} /></span>
                                     </div>
-
-                                    <p className="mt-3 whitespace-pre-wrap text-neutral-700">
-                                        {review.comment}
-                                    </p>
-
-                                    <p className="mt-3 text-xs text-neutral-500">
-                                        {new Date(review.createdAt).toLocaleDateString()}
-                                    </p>
+                                    <p className="mt-5 mb-2.5 max-w-[70ch] whitespace-pre-wrap text-[.9rem] leading-[1.9] text-neutral-800 [overflow-wrap:anywhere] md:ml-[58px]">{review.comment}</p>
                                     {isOwnReview && (
-                                        <div className="mt-3 flex gap-4">
+                                        <div className="md:ml-[58px] [&_button]:min-h-10 [&_button]:py-1 mt-3 flex gap-4">
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -373,26 +370,12 @@ export function RestaurantDetailPage() {
                                     )}
 
                                     {editingReviewId === review._id && (
-                                        <form
+                                        <Modal title="Edit your review" busy={isMutating} onClose={() => setEditingReviewId(null)}>
+                        <form
                                             onSubmit={handleReviewUpdate}
-                                            className="mt-4 space-y-3 rounded-lg border border-neutral-200 p-4"
+                                            className="space-y-4"
                                         >
-                                            <label className="block text-sm">
-                                                <span className="mb-1 block">Rating</span>
-                                                <select
-                                                    value={editScore}
-                                                    onChange={(event) =>
-                                                        setEditScore(event.target.value)
-                                                    }
-                                                    className="w-full rounded-lg border px-3 py-2"
-                                                >
-                                                    {[5, 4, 3, 2, 1].map((value) => (
-                                                        <option key={value} value={value}>
-                                                            {value} / 5
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
+                                            <StarRatingInput value={Number(editScore)} onChange={value => setEditScore(String(value))} disabled={isMutating} autoFocus />
 
                                             <label className="block text-sm">
                                                 <span className="mb-1 block">Comment</span>
@@ -404,30 +387,33 @@ export function RestaurantDetailPage() {
                                                     required
                                                     maxLength={1000}
                                                     rows={3}
-                                                    className="w-full rounded-lg border px-3 py-2"
+                                                    className={`${fieldStyles} resize-y`}
                                                 />
                                             </label>
 
+                                            {reviewActionError && <p role="alert" className="text-red-700">{reviewActionError}</p>}
                                             <div className="flex gap-3">
                                                 <button
                                                     type="submit"
                                                     disabled={
                                                         isMutating || !editComment.trim()
                                                     }
-                                                    className="rounded-lg bg-neutral-950 px-4 py-2 text-sm text-white disabled:opacity-50"
+                                                    className={buttonStyles("primary", "disabled:opacity-50")}
                                                 >
                                                     {isMutating ? "Saving..." : "Save changes"}
                                                 </button>
 
                                                 <button
                                                     type="button"
+                                                    disabled={isMutating}
                                                     onClick={() => setEditingReviewId(null)}
-                                                    className="rounded-lg border px-4 py-2 text-sm"
+                                                    className={buttonStyles("secondary")}
                                                 >
                                                     Cancel
                                                 </button>
                                             </div>
                                         </form>
+                                        </Modal>
                                     )}
                                 </li>
                             );

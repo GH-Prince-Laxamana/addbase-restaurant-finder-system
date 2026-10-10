@@ -1,142 +1,40 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-    createRestaurantReview,
-    deleteReview,
-    getRestaurantReviews,
-    updateReview,
-    type ReviewInput,
-} from "../services/review.service";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { createRestaurantReview, deleteReview, getRestaurantReviews, updateReview, type ReviewInput } from "../services/review.service";
 import type { RestaurantReview } from "../types/api";
+import { createRequestCache } from "../utils/requestCache";
+import { refreshRestaurantCards } from "../utils/restaurantCache";
 
-export function useRestaurantReviews(
-    restaurantId: string | undefined
-) {
-    const [reviews, setReviews] = useState<RestaurantReview[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+const cache = createRequestCache<RestaurantReview[]>();
+export function invalidateRestaurantReviews() { cache.invalidate(); }
+const empty: RestaurantReview[] = [];
+const missing = { data: null, error: new Error("Restaurant ID is required."), isLoading: false };
+export function useRestaurantReviews(restaurantId: string | undefined) {
+    const key = restaurantId ?? "";
+    const subscribe = useCallback((listener: () => void) => cache.subscribe(key, listener), [key]);
+    const getSnapshot = useCallback(() => key ? cache.getSnapshot(key) : missing, [key]);
+    const snapshot = useSyncExternalStore(subscribe, getSnapshot);
     const [isMutating, setIsMutating] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
-    const [reloadKey, setReloadKey] = useState(0);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        if (!restaurantId) {
-            setReviews([]);
-            setError(new Error("Restaurant ID is required."));
-            setIsLoading(false);
-            return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-
-        getRestaurantReviews(restaurantId)
-            .then((result) => {
-                if (!cancelled) {
-                    setReviews(result);
-                }
-            })
-            .catch((err: unknown) => {
-                if (!cancelled) {
-                    setReviews([]);
-                    setError(
-                        err instanceof Error
-                            ? err
-                            : new Error("Unable to load reviews.")
-                    );
-                }
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsLoading(false);
-                }
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [restaurantId, reloadKey]);
-
-    const refetch = useCallback(() => {
-        setReloadKey((current) => current + 1);
-    }, []);
-
-    const create = useCallback(
-        async (input: ReviewInput) => {
-            if (!restaurantId) {
-                throw new Error("Restaurant ID is required.");
-            }
-
-            setIsMutating(true);
-
-            try {
-                const review = await createRestaurantReview(
-                    restaurantId,
-                    input
-                );
-
-                refetch();
-                return review;
-            } catch (err) {
-                throw err instanceof Error
-                    ? err
-                    : new Error("Unable to create review.");
-            } finally {
-                setIsMutating(false);
-            }
-        },
-        [restaurantId, refetch]
-    );
-
-    const update = useCallback(
-        async (
-            reviewId: string,
-            input: Partial<ReviewInput>
-        ) => {
-            setIsMutating(true);
-
-            try {
-                const review = await updateReview(reviewId, input);
-
-                refetch();
-                return review;
-            } catch (err) {
-                throw err instanceof Error
-                    ? err
-                    : new Error("Unable to update review.");
-            } finally {
-                setIsMutating(false);
-            }
-        },
-        [refetch]
-    );
-
-    const remove = useCallback(
-        async (reviewId: string) => {
-            setIsMutating(true);
-
-            try {
-                await deleteReview(reviewId);
-                refetch();
-            } catch (err) {
-                throw err instanceof Error
-                    ? err
-                    : new Error("Unable to delete review.");
-            } finally {
-                setIsMutating(false);
-            }
-        },
-        [refetch]
-    );
-
-    return {
-        reviews,
-        isLoading,
-        isMutating,
-        error,
-        refetch,
-        create,
-        update,
-        remove,
-    };
+    useEffect(() => { if (restaurantId) void cache.fetch(key, () => getRestaurantReviews(restaurantId)); }, [key, restaurantId]);
+    const refetch = useCallback(() => { if (restaurantId) void cache.fetch(key, () => getRestaurantReviews(restaurantId), true); }, [key, restaurantId]);
+    const refresh = useCallback(async () => {
+        if (!restaurantId) return;
+        await Promise.all([cache.fetch(key, () => getRestaurantReviews(restaurantId), true), refreshRestaurantCards(restaurantId)]);
+    }, [key, restaurantId]);
+    const create = useCallback(async (input: ReviewInput) => {
+        if (!restaurantId) throw new Error("Restaurant ID is required.");
+        setIsMutating(true);
+        try { const review = await createRestaurantReview(restaurantId, input); await refresh(); return review; }
+        finally { setIsMutating(false); }
+    }, [restaurantId, refresh]);
+    const update = useCallback(async (reviewId: string, input: Partial<ReviewInput>) => {
+        setIsMutating(true);
+        try { const review = await updateReview(reviewId, input); await refresh(); return review; }
+        finally { setIsMutating(false); }
+    }, [refresh]);
+    const remove = useCallback(async (reviewId: string) => {
+        setIsMutating(true);
+        try { await deleteReview(reviewId); await refresh(); }
+        finally { setIsMutating(false); }
+    }, [refresh]);
+    return { reviews: snapshot.data ?? empty, isLoading: snapshot.isLoading && !snapshot.data, isMutating, error: snapshot.error, refetch, create, update, remove };
 }

@@ -1,3 +1,5 @@
+import { LoadingRegion, Skeleton } from "./ui/Skeleton";
+import { buttonStyles } from "./ui/styles";
 import { useState } from "react";
 import { useFavorites } from "../hooks/useFavorites";
 
@@ -44,9 +46,7 @@ export function RestaurantFavoriteButton({
 
     if (isLoading) {
         return (
-            <p role="status" className="mt-4 text-sm text-neutral-500">
-                Checking favorites...
-            </p>
+            <LoadingRegion label="Checking favorites" className="mt-5"><Skeleton className="h-12 w-55 rounded-full" /></LoadingRegion>
         );
     }
 
@@ -74,7 +74,7 @@ export function RestaurantFavoriteButton({
                 disabled={isMutating}
                 onClick={() => void handleToggle()}
                 aria-pressed={isFavorite}
-                className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm font-medium hover:bg-neutral-100 disabled:opacity-50"
+                className={buttonStyles("secondary", "disabled:opacity-50")}
             >
                 {isMutating
                     ? "Updating..."

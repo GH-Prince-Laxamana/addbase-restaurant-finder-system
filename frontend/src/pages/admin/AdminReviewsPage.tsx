@@ -1,10 +1,18 @@
+import { ReviewSkeletons } from "../../components/LoadingSkeletons";
+import { buttonStyles } from "../../components/ui/styles";
+import { StarRating } from "../../components/StarRating";
+import { useConfirmation } from "../../hooks/useConfirmation";
+import { invalidateRestaurantReviews } from "../../hooks/useRestaurantReviews";
+import { refreshRestaurantCards } from "../../utils/restaurantCache";
 import { useState } from "react";
 import { useAdminReviews } from "../../hooks/useAdminReviews";
 
 export function AdminReviewsPage() {
+    const { confirm, confirmation } = useConfirmation();
     const {
         reviews,
         isLoading,
+        showSkeletons,
         deletingId,
         error,
         refetch,
@@ -15,8 +23,9 @@ export function AdminReviewsPage() {
     const [actionMessage, setActionMessage] = useState("");
 
     async function handleDelete(reviewId: string) {
-        const confirmed = window.confirm(
-            "Permanently delete this review? This cannot be undone."
+        const confirmed = await confirm(
+            "Permanently delete this review? This cannot be undone.",
+            "Delete review"
         );
 
         if (!confirmed) return;
@@ -25,7 +34,10 @@ export function AdminReviewsPage() {
         setActionMessage("");
 
         try {
+            const restaurantId = reviews.find(review => review._id === reviewId)?.restaurant._id;
             await remove(reviewId);
+            invalidateRestaurantReviews();
+            await refreshRestaurantCards(restaurantId);
             setActionMessage("Review deleted successfully.");
         } catch (err) {
             setActionError(
@@ -37,12 +49,13 @@ export function AdminReviewsPage() {
     }
 
     return (
-        <main className="mx-auto max-w-7xl px-6 py-10">
+        <main data-scroll-ready={!showSkeletons} className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-12">
+            {confirmation}
             <header className="mb-8">
                 <p className="text-sm font-medium text-neutral-500">
                     Administration
                 </p>
-                <h1 className="mt-2 text-3xl font-bold">
+                <h1 className="mt-2 text-[clamp(2.2rem,3.7vw,3.4rem)] font-medium">
                     Review moderation
                 </h1>
                 <p className="mt-2 text-neutral-600">
@@ -59,7 +72,7 @@ export function AdminReviewsPage() {
                     type="button"
                     onClick={refetch}
                     disabled={isLoading}
-                    className="rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-50"
+                    className={buttonStyles("secondary", "disabled:opacity-50")}
                 >
                     Refresh reviews
                 </button>
@@ -77,10 +90,8 @@ export function AdminReviewsPage() {
                 </p>
             )}
 
-            {isLoading ? (
-                <p role="status" className="py-10 text-center">
-                    Loading reviews...
-                </p>
+            {showSkeletons ? (
+                <ReviewSkeletons moderation />
             ) : error ? (
                 <div
                     role="alert"
@@ -98,7 +109,7 @@ export function AdminReviewsPage() {
                     </button>
                 </div>
             ) : reviews.length === 0 ? (
-                <div className="rounded-xl border border-neutral-200 p-10 text-center">
+                <div className="p-10 text-center">
                     <h2 className="text-lg font-semibold">
                         No reviews found
                     </h2>
@@ -111,7 +122,7 @@ export function AdminReviewsPage() {
                     {reviews.map((review) => (
                         <li
                             key={review._id}
-                            className="rounded-xl border border-neutral-200 p-5"
+                            className="rounded-[18px] border border-neutral-200 bg-surface p-7 [&_h2]:font-sans [&_h2]:text-base [&_h2]:font-semibold p-5"
                         >
                             <div className="flex flex-col justify-between gap-4 sm:flex-row">
                                 <div className="min-w-0 flex-1">
@@ -120,7 +131,7 @@ export function AdminReviewsPage() {
                                             {review.restaurant.name}
                                         </h2>
                                         <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs">
-                                            {review.score} / 5
+                                            <StarRating value={review.score} />
                                         </span>
                                     </div>
 
@@ -155,7 +166,7 @@ export function AdminReviewsPage() {
                                         onClick={() => {
                                             void handleDelete(review._id);
                                         }}
-                                        className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                        className={buttonStyles("danger", "disabled:opacity-50")}
                                     >
                                         {deletingId === review._id
                                             ? "Deleting..."

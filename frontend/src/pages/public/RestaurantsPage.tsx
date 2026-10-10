@@ -1,89 +1,43 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-
+import { iconStyles, restaurantGridStyles } from "../../components/ui/styles";
+import { FilterDropdown } from "../../components/FilterDropdown";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { useRestaurants } from "../../hooks/useRestaurants";
-import type { RestaurantQuery, RestaurantSort } from "../../services/restaurant.service";
-import { getRestaurantImage } from "../../utils/restaurantImages";
-
-const PAGE_SIZE = 12;
+import { RestaurantCard } from "../../components/RestaurantCard";
+import { RestaurantSkeletons } from "../../components/RestaurantSkeletons";
+import { RestaurantSearchForm } from "../../components/RestaurantSearchForm";
+import { readRestaurantQuery, updateRestaurantParams } from "../../utils/restaurantQuery";
+import { useReveal } from "../../hooks/useReveal";
 
 export function RestaurantsPage() {
-    const [searchParams] = useSearchParams();
-    const initialQuery = searchParams.get("q") ?? "";
-    const initialCuisine = searchParams.get("cuisine") ?? "";
-
-    const [searchInput, setSearchInput] = useState(initialQuery);
-    const [q, setQ] = useState(initialQuery);
-    const [cuisine, setCuisine] = useState(initialCuisine);
-    const [borough, setBorough] = useState("");
-    const [minRating, setMinRating] = useState("");
-    const [sort, setSort] = useState<RestaurantSort>("rating");
-    const [page, setPage] = useState(1);
-
-    const query = useMemo<RestaurantQuery>(
-        () => ({
-            q: q || undefined,
-            cuisine: cuisine || undefined,
-            borough: borough || undefined,
-            minRating: minRating ? Number(minRating) : undefined,
-            sort,
-            page,
-            limit: PAGE_SIZE,
-        }),
-        [q, cuisine, borough, minRating, sort, page]
-    );
-
-    const { data, isLoading, error, refetch } = useRestaurants(query);
-
-    function handleSearch(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        setQ(searchInput.trim());
-        setPage(1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const query = readRestaurantQuery(searchParams);
+    const { q = "", cuisine = "", borough = "", minRating, sort, page = 1 } = query;
+    const headingRef = useReveal<HTMLElement>();
+    const { data, isLoading, showSkeletons, error, refetch } = useRestaurants(query);
+    function update(patch: Record<string, string>, replace = false) {
+        setSearchParams(current => updateRestaurantParams(current, patch), { replace });
     }
-
-    function resetFilters() {
-        setSearchInput("");
-        setQ("");
-        setCuisine("");
-        setBorough("");
-        setMinRating("");
-        setSort("rating");
-        setPage(1);
-    }
+    const setCuisine = (value: string) => update({ cuisine: value, page: "1" }, true);
+    const setBorough = (value: string) => update({ borough: value, page: "1" }, true);
+    const setMinRating = (value: string) => update({ minRating: value, page: "1" });
+    const setSort = (value: string) => update({ sort: value, page: "1" });
+    function resetFilters() { setSearchParams({}); }
 
     return (
-        <main className="mx-auto max-w-6xl px-6 py-12">
-            <header className="mb-8">
-                <h1 className="text-3xl font-bold">Explore restaurants</h1>
+        <main data-scroll-ready={!showSkeletons} className="mx-auto max-w-6xl px-6 py-12">
+            <header ref={headingRef} className="mb-8 pb-[18px] [&_h1]:text-[clamp(2.5rem,4vw,3.6rem)] [&>p]:max-w-[680px]">
+                <h1 className="text-3xl font-medium">Explore restaurants</h1>
                 <p className="mt-2 text-neutral-600">
-                    Search and discover restaurants from our database.
+                    Find your kind of place. A world of flavor, one neighborhood at a time.
                 </p>
             </header>
 
-            <form
-                onSubmit={handleSearch}
-                className="mb-6 flex flex-col gap-3 sm:flex-row"
-            >
-                <input
-                    type="search"
-                    value={searchInput}
-                    onChange={(event) => setSearchInput(event.target.value)}
-                    placeholder="Search restaurants..."
-                    aria-label="Search restaurants"
-                    className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-4 py-3"
-                />
-
-                <button
-                    type="submit"
-                    className="rounded-lg bg-neutral-950 px-5 py-3 font-medium text-white"
-                >
-                    Search
-                </button>
-            </form>
+            <RestaurantSearchForm key={q} initialValue={q} onSearch={value => update({ q: value, page: "1" })} />
 
             <section
                 aria-label="Restaurant filters"
-                className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                className="mt-6 grid grid-cols-1 gap-4 py-3 pb-[25px] sm:grid-cols-2 lg:grid-cols-4 [&_label>span]:mb-[9px] [&_label>span]:ml-3 mb-8"
             >
                 <label className="text-sm">
                     <span className="mb-1 block">Cuisine</span>
@@ -91,10 +45,9 @@ export function RestaurantsPage() {
                         value={cuisine}
                         onChange={(event) => {
                             setCuisine(event.target.value);
-                            setPage(1);
                         }}
                         placeholder="e.g. Bakery"
-                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
+                        className="min-h-12 w-full min-w-0 rounded-full border border-neutral-200 bg-surface px-5 py-3 text-[15px] focus:border-burgundy"
                     />
                 </label>
 
@@ -104,47 +57,17 @@ export function RestaurantsPage() {
                         value={borough}
                         onChange={(event) => {
                             setBorough(event.target.value);
-                            setPage(1);
                         }}
                         placeholder="e.g. Bronx"
-                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
+                        className="min-h-12 w-full min-w-0 rounded-full border border-neutral-200 bg-surface px-5 py-3 text-[15px] focus:border-burgundy"
                     />
                 </label>
 
-                <label className="text-sm">
-                    <span className="mb-1 block">Minimum rating</span>
-                    <select
-                        value={minRating}
-                        onChange={(event) => {
-                            setMinRating(event.target.value);
-                            setPage(1);
-                        }}
-                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                    >
-                        <option value="">Any rating</option>
-                        <option value="1">1+</option>
-                        <option value="2">2+</option>
-                        <option value="3">3+</option>
-                        <option value="4">4+</option>
-                        <option value="4.5">4.5+</option>
-                    </select>
-                </label>
+                <FilterDropdown label="Minimum rating" value={String(minRating ?? "")} onChange={setMinRating}
+                    options={[{ value: "", label: "Any rating" }, { value: "1", label: "1+ stars" }, { value: "2", label: "2+ stars" }, { value: "3", label: "3+ stars" }, { value: "4", label: "4+ stars" }, { value: "4.5", label: "4.5+ stars" }]} />
 
-                <label className="text-sm">
-                    <span className="mb-1 block">Sort by</span>
-                    <select
-                        value={sort}
-                        onChange={(event) => {
-                            setSort(event.target.value as RestaurantSort);
-                            setPage(1);
-                        }}
-                        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5"
-                    >
-                        <option value="rating">Highest rated</option>
-                        <option value="reviews">Most reviewed</option>
-                        <option value="name">Name</option>
-                    </select>
-                </label>
+                <FilterDropdown label="Sort by" value={sort ?? "rating"} onChange={setSort}
+                    options={[{ value: "rating", label: "Highest rated" }, { value: "reviews", label: "Most reviewed" }, { value: "name", label: "Name" }]} />
             </section>
 
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -163,11 +86,7 @@ export function RestaurantsPage() {
                 </button>
             </div>
 
-            {isLoading && (
-                <p role="status" className="py-12 text-center">
-                    Loading restaurants...
-                </p>
-            )}
+            {showSkeletons && <RestaurantSkeletons />}
 
             {error && !isLoading && (
                 <div role="alert" className="rounded-lg border border-red-200 p-5">
@@ -182,52 +101,16 @@ export function RestaurantsPage() {
                 </div>
             )}
 
-            {!isLoading && !error && data && (
+            {!showSkeletons && data && (
                 <>
                     {data.results.length === 0 ? (
                         <p className="py-12 text-center text-neutral-600">
                             No restaurants match your search.
                         </p>
                     ) : (
-                        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {data.results.map((restaurant) => (
-                                <li
-                                    key={restaurant._id}
-                                    className="rounded-xl border border-neutral-200 p-5"
-                                >
-                                    <img
-                                        src={getRestaurantImage(restaurant._id)}
-                                        alt="Restaurant food"
-                                        loading="lazy"
-                                        className="mb-4 aspect-16/10 w-full rounded-lg object-cover"
-                                    />
-                                    
-                                    <p className="text-sm text-neutral-500">
-                                        {restaurant.cuisine} · {restaurant.borough}
-                                    </p>
-
-                                    <h2 className="mt-2 text-lg font-semibold">
-                                        <Link
-                                            to={`/restaurants/${restaurant._id}`}
-                                            className="hover:underline"
-                                        >
-                                            {restaurant.name}
-                                        </Link>
-                                    </h2>
-
-                                    <p className="mt-3 text-sm text-neutral-600">
-                                        {restaurant.address.street}
-                                        {restaurant.address.zipcode
-                                            ? `, ${restaurant.address.zipcode}`
-                                            : ""}
-                                    </p>
-
-                                    <p className="mt-3 text-sm">
-                                        Rating: {Number(restaurant.avgScore).toFixed(1)}
-                                        {" · "}
-                                        {restaurant.scoreCount} reviews
-                                    </p>
-                                </li>
+                        <ul className={restaurantGridStyles}>
+                            {data.results.map((restaurant, index) => (
+                                <li key={restaurant._id}><RestaurantCard restaurant={restaurant} index={index} /></li>
                             ))}
                         </ul>
                     )}
@@ -238,12 +121,12 @@ export function RestaurantsPage() {
                             className="mt-8 flex items-center justify-center gap-4"
                         >
                             <button
-                                type="button"
-                                disabled={!data.pagination.hasPreviousPage}
-                                onClick={() => setPage((current) => current - 1)}
-                                className="rounded-lg border px-4 py-2 disabled:opacity-40"
+                                type="button" aria-label="Previous page"
+                                disabled={isLoading || !data.pagination.hasPreviousPage}
+                                onClick={() => update({ page: String(page - 1) })}
+                                className={iconStyles}
                             >
-                                Previous
+                                <ArrowLeft aria-hidden="true" size={20} />
                             </button>
 
                             <span className="text-sm">
@@ -252,12 +135,12 @@ export function RestaurantsPage() {
                             </span>
 
                             <button
-                                type="button"
-                                disabled={!data.pagination.hasNextPage}
-                                onClick={() => setPage((current) => current + 1)}
-                                className="rounded-lg border px-4 py-2 disabled:opacity-40"
+                                type="button" aria-label="Next page"
+                                disabled={isLoading || !data.pagination.hasNextPage}
+                                onClick={() => update({ page: String(page + 1) })}
+                                className={iconStyles}
                             >
-                                Next
+                                <ArrowRight aria-hidden="true" size={20} />
                             </button>
                         </nav>
                     )}

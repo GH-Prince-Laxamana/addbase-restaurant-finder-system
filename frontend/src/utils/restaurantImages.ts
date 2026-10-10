@@ -1,5 +1,5 @@
 const imageModules = import.meta.glob<string>(
-    "../assets/restaurants/*.{svg,jpg,jpeg,png,webp}",
+    "../assets/restaurants/*.{svg,jpg,jpeg,png,webp,avif}",
     {
         eager: true,
         query: "?url",

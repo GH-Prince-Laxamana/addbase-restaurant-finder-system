@@ -1,3 +1,4 @@
+import { buttonStyles, fieldStyles } from "../../components/ui/styles";
 import {
     useState,
     type FormEvent,
@@ -79,13 +80,13 @@ export function LoginPage({ mode = "user" }: LoginPageProps) {
 
     return (
         <section className="flex min-h-[calc(100vh-80px)] items-center justify-center px-6 py-12">
-            <div className="w-full max-w-md">
+            <div className="mx-auto w-full max-w-[480px]">
                 <div className="mb-8 text-center">
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-500">
-                        Restaurant Explorer
+                    <p className="mb-2 font-display text-[1.25rem] font-medium text-neutral-500">
+                        Hapag
                     </p>
 
-                    <h1 className="text-4xl font-bold tracking-tight text-neutral-950">
+                    <h1 className="text-[2.7rem] font-medium tracking-tight text-neutral-950">
                         {mode === "admin" ? "Administrator sign in" : "Welcome back"}
                     </h1>
 
@@ -96,7 +97,7 @@ export function LoginPage({ mode = "user" }: LoginPageProps) {
                     </p>
                 </div>
 
-                <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+                <div>
                     {successMessage && (
                         <div
                             role="status"
@@ -139,7 +140,7 @@ export function LoginPage({ mode = "user" }: LoginPageProps) {
                                         event.target.value
                                     )
                                 }
-                                className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-neutral-950 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-200"
+                                className={fieldStyles}
                                 placeholder="you@example.com"
                             />
                         </div>
@@ -165,7 +166,7 @@ export function LoginPage({ mode = "user" }: LoginPageProps) {
                                         event.target.value
                                     )
                                 }
-                                className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-neutral-950 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-200"
+                                className={fieldStyles}
                                 placeholder="••••••••"
                             />
                         </div>
@@ -173,7 +174,7 @@ export function LoginPage({ mode = "user" }: LoginPageProps) {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full rounded-lg bg-neutral-950 px-4 py-3 font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+                            className={buttonStyles("primary", "w-full transition disabled:cursor-not-allowed disabled:opacity-60")}
                         >
                             {isSubmitting
                                 ? "Signing in..."
