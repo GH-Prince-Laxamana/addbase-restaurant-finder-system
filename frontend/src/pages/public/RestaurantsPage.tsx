@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { useRestaurants } from "../../hooks/useRestaurants";
 import type { RestaurantQuery, RestaurantSort } from "../../services/restaurant.service";
+import { getRestaurantImage } from "../../utils/restaurantImages";
 
 const PAGE_SIZE = 12;
 
@@ -194,6 +195,13 @@ export function RestaurantsPage() {
                                     key={restaurant._id}
                                     className="rounded-xl border border-neutral-200 p-5"
                                 >
+                                    <img
+                                        src={getRestaurantImage(restaurant._id)}
+                                        alt="Restaurant food"
+                                        loading="lazy"
+                                        className="mb-4 aspect-16/10 w-full rounded-lg object-cover"
+                                    />
+                                    
                                     <p className="text-sm text-neutral-500">
                                         {restaurant.cuisine} · {restaurant.borough}
                                     </p>

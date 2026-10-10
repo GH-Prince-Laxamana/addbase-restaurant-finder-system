@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useRestaurants } from "../../hooks/useRestaurants";
 
+import { getRestaurantImage } from "../../utils/restaurantImages";
+
 export function HomePage() {
     const navigate = useNavigate();
     const [searchInput, setSearchInput] = useState("");
@@ -162,6 +164,14 @@ export function HomePage() {
                                         key={restaurant._id}
                                         className="rounded-xl border border-neutral-200 p-5"
                                     >
+
+                                        <img
+                                            src={getRestaurantImage(restaurant._id)}
+                                            alt={`${restaurant.cuisine} restaurant`}
+                                            loading="lazy"
+                                            className="mb-4 aspect-[16/10] w-full rounded-lg object-cover"
+                                        />
+                                        
                                         <p className="text-sm text-neutral-500">
                                             {restaurant.cuisine} ·{" "}
                                             {restaurant.borough}
