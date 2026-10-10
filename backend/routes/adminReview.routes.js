@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { authenticate, requireAdmin } from "../middleware/auth.middleware.js";
+import {
+  authenticate,
+  requireAdmin,
+  limitWrites,
+} from "../middleware/auth.middleware.js";
+import { validateObjectId } from "../middleware/security.middleware.js";
 import {
   deleteAdminReview,
   listAdminReviews,
@@ -7,7 +12,8 @@ import {
 
 const router = Router();
 
-router.use(authenticate, requireAdmin);
+router.use(authenticate, requireAdmin, limitWrites);
+router.param("id", validateObjectId);
 
 router.get("/", listAdminReviews);
 router.delete("/:id", deleteAdminReview);

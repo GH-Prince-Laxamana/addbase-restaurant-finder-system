@@ -20,7 +20,10 @@ export function validateRegister(req, res, next) {
 
   if (typeof email !== "string" || !email.trim()) {
     details.email = "Email is required.";
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+  } else if (
+    email.length > 254 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  ) {
     details.email = "A valid email address is required.";
   }
 
@@ -44,10 +47,17 @@ export function validateLogin(req, res, next) {
 
   if (typeof email !== "string" || !email.trim()) {
     details.email = "Email is required.";
+  } else if (
+    email.length > 254 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  ) {
+    details.email = "A valid email address is required.";
   }
 
   if (typeof password !== "string" || !password) {
     details.password = "Password is required.";
+  } else if (password.length < 8 || password.length > 128) {
+    details.password = "Password must be between 8 and 128 characters.";
   }
 
   if (Object.keys(details).length > 0) {
@@ -74,6 +84,8 @@ function validateRestaurantFields(body, { partial = false } = {}) {
 
     if (typeof body[field] !== "string" || !body[field].trim()) {
       details[field] = `${label} is required.`;
+    } else if (body[field].length > 200) {
+      details[field] = `${label} must not exceed 200 characters.`;
     }
   }
 
@@ -89,6 +101,14 @@ function validateRestaurantFields(body, { partial = false } = {}) {
     ) {
       details.address = "Address must be an object.";
     } else {
+      for (const field of ["street", "zipcode", "building"]) {
+        if (
+          typeof body.address[field] === "string" &&
+          body.address[field].length > 200
+        )
+          details[`address.${field}`] =
+            "Address fields must not exceed 200 characters.";
+      }
       if (
         body.address.street !== undefined &&
         (typeof body.address.street !== "string" || !body.address.street.trim())
@@ -117,7 +137,7 @@ function validateRestaurantFields(body, { partial = false } = {}) {
         if (
           !Array.isArray(coord) ||
           coord.length !== 2 ||
-          !coord.every((value) => typeof value === "number")
+          !coord.every((value) => Number.isFinite(value))
         ) {
           details["address.coord"] =
             "Coordinates must contain exactly two numbers.";

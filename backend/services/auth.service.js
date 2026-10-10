@@ -104,7 +104,15 @@ export async function refreshAuthentication(refreshToken) {
   let payload;
 
   try {
-    payload = jwt.verify(refreshToken, env.jwtRefreshSecret);
+    payload = jwt.verify(refreshToken, env.jwtRefreshSecret, {
+      algorithms: ["HS256"],
+    });
+    if (
+      typeof payload !== "object" ||
+      !/^[a-f\d]{24}$/i.test(payload.sub) ||
+      typeof payload.jti !== "string"
+    )
+      throw new Error("Invalid token claims");
   } catch {
     const error = new Error("Invalid or expired refresh token.");
     error.statusCode = 401;
