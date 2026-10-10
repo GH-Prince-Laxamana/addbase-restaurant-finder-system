@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useRestaurant } from "../../hooks/useRestaurant";
 import { useRestaurantReviews } from "../../hooks/useRestaurantReviews";
+import { RestaurantFavoriteButton } from "../../components/RestaurantFavoriteButton";
 
 export function RestaurantDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -182,6 +183,22 @@ export function RestaurantDetailPage() {
                     {restaurant.address.street},{" "}
                     {restaurant.address.zipcode}
                 </p>
+
+                {user?.role === "user" && (
+                    <RestaurantFavoriteButton restaurantId={restaurant._id} />
+                )}
+
+                {!user && (
+                    <p className="mt-5 text-sm text-neutral-600">
+                        <Link
+                            to="/login"
+                            className="font-medium underline underline-offset-4"
+                        >
+                            Sign in
+                        </Link>{" "}
+                        to save this restaurant to your favorites.
+                    </p>
+                )}
 
                 <div className="mt-6 flex flex-wrap gap-6">
                     <div>
