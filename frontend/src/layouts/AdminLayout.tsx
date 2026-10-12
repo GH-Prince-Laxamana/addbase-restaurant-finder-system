@@ -26,7 +26,6 @@ export function AdminLayout() {
             <NavLink to="/" className="mx-[30px] mt-[50px] hidden py-[14px] text-[14px] text-neutral-600 lg:block">View public site</NavLink>
             <p className="hidden px-[30px] py-[14px] font-display text-base leading-[1.6] text-neutral-500 italic lg:block">The art of a well-kept table.</p>
             <div className="mt-auto hidden flex-col items-start gap-3 px-[30px] lg:flex">
-                <span className="text-sm text-neutral-600">{user?.name}</span>
                 <button type="button" onClick={() => void handleLogout()} className={buttonStyles("secondary")}>Sign out</button>
             </div>
         </header>
